@@ -97,7 +97,11 @@ app.use("/api/user/auth", userAuthRoutes);
 // import studentRoutes from "./routes/student/primaryRoute.js";
 // app.use("/api/student",studentRoutes);
 
-
+// test route
+app.get("/test", (req,res)=>{
+  // res.render("test");
+  res.status(200).send("Server is up & running...")
+})
 
 export default app;
 
