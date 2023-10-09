@@ -41,4 +41,28 @@ export const loginUser = catchAsyncError(async (req, res, next) => {
 });
 
 
+// change password
+export const userChangePassword = catchAsyncError(async (req, res, next) => {
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+
+  if (newPassword !== confirmPassword)
+    return next(
+      new ErrorHandler("Password and confirm password does't match", 400)
+    );
+
+  const user = await User.findOne({ email: req.user.email }).select(
+    "+password"
+  );
+  const correctPass = await user.comparePassword(currentPassword);
+
+  if (!correctPass) {
+    return next(new ErrorHandler("Incorrect password", 401));
+  }
+
+  user.password = newPassword;
+  await user.save();
+
+  // req.flash("success", "Password updated successfully.");
+  // res.redirect("/api/user/profile");
+});
 
