@@ -51,6 +51,12 @@ app.use(
   })
 );
 
+// Create a rotating write stream
+let accessLogStream = rfs.createStream("access.log", {
+  interval: "1d", // rotate daily
+  path: path.join(__dirname, "logs"),
+});
+
 app.set("view engine", "ejs");
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
