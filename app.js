@@ -103,6 +103,21 @@ app.get("/test", (req,res)=>{
   res.status(200).send("Server is up & running...")
 })
 
+// fallback route
+app.get("*", (req, res) => {
+  const responseType = req.accepts(["html", "json"]);
+
+  if (responseType === "html") {
+    console.log(req.url, ": not found request"); //TODO:remove this console
+    res.render(__dirname + "/views/common/page-not-found");
+  } else if (responseType === "json") {
+    res.status(500).json({
+      success: false,
+      message: "The resource you are trying to get is not available.",
+    });
+  }
+});
+
 export default app;
 
 app.use(ErrorMiddleware);
