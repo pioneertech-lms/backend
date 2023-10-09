@@ -1,0 +1,52 @@
+{
+  "name": "pioneer-tech-backend",
+  "version": "1.0.0",
+  "description": "lms",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/pioneertech-lms/backend.git"
+  },
+  "keywords": [
+    "lms"
+  ],
+  "author": "DrasticCoder",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pioneertech-lms/backend/issues"
+  },
+  "homepage": "https://github.com/pioneertech-lms/backend#readme",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.2",
+    "connect-mongo": "^5.0.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "express-flash": "^0.0.2",
+    "express-sanitizer": "^1.0.6",
+    "express-session": "^1.17.3",
+    "jsonwebtoken": "^9.0.2",
+    "method-override": "^3.0.0",
+    "mongoose": "^7.6.0",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "passport": "^0.6.0",
+    "path": "^0.12.7",
+    "rotating-file-stream": "^3.1.1",
+    "slugify": "^1.6.6",
+    "url": "^0.11.3",
+    "validator": "^13.11.0"
+  },
+  "devDependencies": {
+    "dotenv": "^16.3.1",
+    "nodemon": "^3.0.1"
+  }
+}
