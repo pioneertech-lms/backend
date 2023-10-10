@@ -83,11 +83,11 @@ app.use(function (req, res, next) {
 
 // User route imports
 import userAuthRoutes from "./routes/user/authRoute.js";
-// import userPrimaryRoutes from "./routes/user/primaryRoute.js";
-
-// User Routes
 app.use("/api/user/auth", userAuthRoutes);
-// app.use("/api/user/", userPrimaryRoutes);
+
+// Admin Routes
+import adminPrimaryRoutes from "./routes/admin/primaryRoute.js";
+app.use("/api/admin/", adminPrimaryRoutes);
 
 // // Teacher route imports
 // import teacherRoutes from "./routes/teacher/primaryRoute.js";

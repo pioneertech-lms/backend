@@ -10,7 +10,7 @@ export const loginUser = catchAsyncError(async (req, res, next) => {
   const { username, password, role } = req.body;
 
   const user = await User.findOne({
-    $or: [{ phone: username }, { email: username }],
+    $or: [{ phone: username }, { email: username }, {username:username}],
     deleted: false,
     status: true,
   }).select("+password");
@@ -40,6 +40,97 @@ export const loginUser = catchAsyncError(async (req, res, next) => {
   sendToken(user, 200, res);
 });
 
+// register
+export const registerUser = catchAsyncError(async (req, res, next) => {
+ const {
+    firstName,
+    lastName,
+    email,
+    phone,
+    username,
+    password,
+    confirmPassword,
+    role,
+    address,
+    city,
+    state,
+    pincode,
+    dob,
+    gender,
+    description,
+  } = req.body;
+
+  if (password !== confirmPassword) {
+    return next(
+      new ErrorHandler("Password and confirm password must be same.")
+    );
+  }
+
+  let user = await User.findOne({
+    $or: [{ email: email }, { phone: phone }, { username: username }],
+    deleted: false,
+    status: true,
+  });
+
+  if (user) {
+    return next(new ErrorHandler("Email or Phone already registered.", 400));
+  }
+
+  let _user = {
+    firstName,
+    lastName,
+    slug:slugify(`${firstName} ${lastName}`),
+    username,
+    password,
+  };
+
+  
+  if(role){
+    _user.role = role;
+  }
+  if(email){
+    _user.email = email;
+  }
+  if(phone){
+    _user.phone = phone;
+  }
+  if(dob){
+    _user.dob = dob;
+  }
+  if(role){
+    _user.role = role;
+  }
+  if(gender){
+    _user.gender = gender;
+  }
+  if(description){
+    _user.description = description;
+  }
+  
+
+  if(address || city || state || pincode){
+    let _location = {};
+
+      if(address){
+    _location.address = address;
+    }
+    if(city){
+      _location.city = city;
+    }
+    if(state){
+      _location.state = state;
+    }
+    if(pincode){
+      _location.pincode = pincode;
+    }
+
+    _user.location = _location
+  }
+
+  user = await User.create(_user);
+
+  sendToken(user, 200, res);
+})
 
 // change password
 export const userChangePassword = catchAsyncError(async (req, res, next) => {
