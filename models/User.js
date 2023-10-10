@@ -32,22 +32,22 @@ const schema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      required: [true, "Please enter your phone number."],
+      // required: [true, "Please enter your phone number."],
       unique:[true, "Please enter valid phone number"],
       minLength: [10, "Please enter valid phone number."],
     },
     location: {
       // type: mongoose.Schema.Types.Mixed,
       // coordinates: [Number], // For longitude,latitude coordinates
-      type: {
-        type: String,
-        enum: ['Point'], // geospatial indexing
-        default: 'Point',
-      },
-      coordinates: {
-        type: [Number], // [longitude, latitude]
-        index: '2dsphere', // for geospatial query
-      },
+      // type: {
+      //   type: String,
+      //   enum: ['Point'], // geospatial indexing
+      //   default: 'Point',
+      // },
+      // coordinates: {
+      //   type: [Number], // [longitude, latitude]
+      //   index: '2dsphere', // for geospatial query
+      // },
       address: String,  
       city: String,
       state: String,
@@ -101,6 +101,11 @@ const schema = new mongoose.Schema(
     profileImg: {
       type: String,
     },
+    modules: [
+      {
+        type: String,
+      },
+    ],
     resetPasswordToken: String,
     resetPasswordExpire: String,
   },
