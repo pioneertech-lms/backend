@@ -106,6 +106,10 @@ export const getSingleUser = catchAsyncError(async (req, res, next) => {
     }
 });
 
+export const updateUser = catchAsyncError(async (req, res, next) => {
+
+});
+
 export const userChangePassword = catchAsyncError(async (req, res, next) => {
     
     const user = await User.findById(req.params.id).select(
