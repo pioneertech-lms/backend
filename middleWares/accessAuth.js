@@ -34,11 +34,16 @@ export const authorizedUser = async(req, res, next) => {
 
 export const checkUserModuleAccess = (moduleName) => {
   return (req, res, next) => {
-    if (req.user.role === "user" || req.user.modules.includes(moduleName)) {
+    if(!req.user){
+      console.log(req.user)
+      return res.status(501).json({message:"Don't have access"});
+    }
+    if (req.user.role === "admin" || req.user.modules.includes(moduleName)) {
       next();
     } else {
-      req.flash("error", "Don't have access to this module!");
-      return res.redirect("/api/user/auth/login");
+      return res.status(502).json({message:"Don't have access to this module!"});
+      // req.flash("error", "Don't have access to this module!");
+      // return res.redirect("/api/user/auth/login");
     }
   };
 };
