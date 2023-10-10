@@ -105,3 +105,19 @@ export const getSingleUser = catchAsyncError(async (req, res, next) => {
         return res.status(404).json({message:"User not found"});
     }
 });
+
+export const userChangePassword = catchAsyncError(async (req, res, next) => {
+    
+    const user = await User.findById(req.params.id).select(
+        "+password"
+      );
+
+    if(!user){
+        return res.status(404).json({message:"User not found!"});
+    } else {
+        user.password = req.body.password;
+        await user.save();
+
+        return res.status(200).json({message:"Password updated successfully"});
+    }
+});
