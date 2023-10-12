@@ -107,7 +107,104 @@ export const getSingleUser = catchAsyncError(async (req, res, next) => {
 });
 
 export const updateUser = catchAsyncError(async (req, res, next) => {
+  const user = await User.findById(req.params.id);
 
+  if(!user){
+    return res.status(404).json({message:"User not found!"});
+  }
+
+  const {
+    firstName,
+    lastName,
+    email,
+    phone,
+    username,
+    role,
+    address,
+    city,
+    state,
+    pincode,
+    dob,
+    gender,
+    description,
+    isActive,
+    isDeleted,
+    modules,
+  } = req.body;
+
+  if(firstName){
+    user.firstName = firstName;
+  }
+  if(lastName){
+    user.lastName = lastName;
+  }
+  if(username){
+    user.username = username;
+  }
+  if(isActive){
+    user.isActive = isActive;
+  }
+  if(isDeleted){
+    user.isDeleted = isDeleted;
+  }
+  if(modules){
+    user.modules = modules;
+  }
+  if(role){
+    user.role = role;
+  }
+  if(role){
+    user.role = role;
+  }
+  if(role){
+    user.role = role;
+  }
+  if(email){
+    user.email = email;
+  }
+  if(phone){
+    user.phone = phone;
+  }
+  if(dob){
+    user.dob = dob;
+  }
+  if(role){
+    user.role = role;
+  }
+  if(gender){
+    user.gender = gender;
+  }
+  if(description){
+    user.description = description;
+  }
+  
+
+  if(address || city || state || pincode){
+    let _location = {};
+
+      if(address){
+    _location.address = address;
+    }
+    if(city){
+      _location.city = city;
+    }
+    if(state){
+      _location.state = state;
+    }
+    if(pincode){
+      _location.pincode = pincode;
+    }
+
+    user.location = _location
+  }
+
+  const result = await user.save();
+
+  if(result){
+    return res.status(200).json({message:"User updated successfully."});
+  } else {
+    return res.status(502).json({message:"Something went wrong!"});
+  }
 });
 
 export const userChangePassword = catchAsyncError(async (req, res, next) => {
