@@ -37,17 +37,6 @@ const schema = new mongoose.Schema(
       minLength: [10, "Please enter valid phone number."],
     },
     location: {
-      // type: mongoose.Schema.Types.Mixed,
-      // coordinates: [Number], // For longitude,latitude coordinates
-      // type: {
-      //   type: String,
-      //   enum: ['Point'], // geospatial indexing
-      //   default: 'Point',
-      // },
-      // coordinates: {
-      //   type: [Number], // [longitude, latitude]
-      //   index: '2dsphere', // for geospatial query
-      // },
       address: String,  
       city: String,
       state: String,
@@ -67,21 +56,49 @@ const schema = new mongoose.Schema(
     },    
     role: {
       type: String,
-      enum: ["student","teacher","admin"],
+      enum: ["student","teacher","admin","superadmin"],
       default: "student",
     },
+    description: {
+      type: String,
+      minLength: [10, "Description must be greater than 10 characters."],
+    },
+    profileImg: {
+      type: String,
+    },
+    subjects:[
+      {
+        type: String,
+        enum: ["physics","chemistry","mathematics","biology"]
+      }
+    ],
+    standard:{
+      type:Number,
+      enum:[11,12]
+    },
+    exams:[
+      {
+        type:String,
+        enum:["cet","jee","neet"]
+      },
+    ],
+    modules: [
+      {
+        type: String,
+      },
+    ],
     otp:{
       type:String,
       default:"",
+    },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "user",
     },
     isVerified:{
       type:Boolean,
       default:false,
     },
-    // createdBy: {
-    //   type: Schema.Types.ObjectId,
-    //   ref: "admin",
-    // },
     isActive: {
       type: Boolean,
       default: true,
@@ -90,22 +107,6 @@ const schema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    // subscription: {
-    //   id: String,
-    //   status: String,
-    // },
-    description: {
-      type: String,
-      minLength: [10, "Description must be greater than 10 characters."],
-    },
-    profileImg: {
-      type: String,
-    },
-    modules: [
-      {
-        type: String,
-      },
-    ],
     resetPasswordToken: String,
     resetPasswordExpire: String,
   },
