@@ -414,6 +414,74 @@ export const getSingleClass = catchAsyncError(async (req,res,next) => {
   return res.status(200).json(classFound);
 })
 
+export const updateClass = catchAsyncError(async (req,res,next) => {
+  const {
+    className,
+    description,
+    supportEmail,
+    supportPhone,
+    address,
+    city,
+    state,
+    pincode,
+    isVerified,
+    isActive,
+    isDeleted
+  } = req.body;
+
+  const classFound = await Class.findById(req.params.id);
+
+  if(!classFound){
+    return res.status(404).json({message:"Class not found!"});
+  }
+
+  if(className){
+    classFound.className = className;
+  }
+  if(description){
+    classFound.description = description;
+  }
+  if(supportEmail){
+    classFound.supportEmail = supportEmail;
+  }
+  if(supportPhone){
+    classFound.supportPhone = supportPhone;
+  }
+  if(isVerified){
+    classFound.isVerified = isVerified;
+  }
+  if(isActive){
+    classFound.isActive = isActive;
+  }
+  if(isDeleted){
+    classFound.isDeleted = isDeleted;
+  }
+
+  if(address || city || state || pincode){
+    let _location = classFound.location;
+    if(address){
+      _location.address = address
+    }
+    if(city){
+      _location.city = city
+    }
+    if(state){
+      _location.state = state
+    }
+    if(pincode){
+      _location.pincode = pincode
+    }
+
+    classFound.location = _location;
+  }
+  
+  const updateClass = await classFound.save();
+
+  if(!updateClass){
+    return res.status(500).json({message:"error in updating class info"});
+  }
+  return res.status(200).json(updateClass);
+})
 
 export const deleteClass = catchAsyncError(async (req,res,next) => {
   const {id} = req.params;
