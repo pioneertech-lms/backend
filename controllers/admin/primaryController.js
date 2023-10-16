@@ -1,4 +1,5 @@
 import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
+import { Class } from "../../models/Class.js";
 import { User } from "../../models/User.js";
 
 export const deleteUser = catchAsyncError(async (req, res, next) => {
@@ -222,3 +223,96 @@ export const userChangePassword = catchAsyncError(async (req, res, next) => {
         return res.status(200).json({message:"Password updated successfully"});
     }
 });
+
+
+// class routes
+export const getAllClasses = catchAsyncError(async (req,res,next) => {
+  let query = {
+    isDeleted: false,
+    isVerified:true,
+    isActive:true,
+  };
+
+  if(req.query.role){
+    query.role = req.query.role;
+  }
+
+  if(req.query.isDeleted=== "true"){
+    query.isActive = true;
+  }
+  if(req.query.isVerified === "false"){
+    query.isVerified = false;
+  }
+  if(req.query.isActive==="false"){
+    query.isActive = false;
+  }
+
+  let limit = parseInt(req.query.perPage) || 10;
+  let page = req.query.page ? req.query.page : 1;
+  let skip = (page - 1) * (req.query.perPage ? req.query.perPage : 10);
+  let sort = req.query.sort ? {} : { createdAt: -1 };
+  let search = req.query.search;
+
+  if (search) {
+    let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+    const regex = new RegExp(newSearchQuery, "gi");
+    query.$or = [
+      {
+        className: regex,
+      },
+      {
+        description: regex,
+      },
+      {
+        location: regex,
+      },
+      {
+        supportEmail: regex,
+      },
+      {
+        supportPhone: regex,
+      },
+    ];
+  }
+
+  let aggregateQuery = [
+    {
+      $match: query,
+    },
+    {
+      $sort: sort,
+    },
+    {
+      $facet: {
+        data: [
+          {
+            $skip: skip,
+          },
+          {
+            $limit: limit,
+          },
+        ],
+        metadata: [
+          {
+            $match: query,
+          },
+          {
+            $count: "total",
+          },
+        ],
+      },
+    },
+  ];
+
+  const classes = await Class.aggregate(aggregateQuery);
+
+  res.status(200).json({
+    classes: classes[0].data,
+    total: classes[0].metadata[0]
+      ? Math.ceil(classes[0].metadata[0].total / limit)
+      : 0,
+    page,
+    perPage: limit,
+    search: search ? search : "",
+  })
+})
