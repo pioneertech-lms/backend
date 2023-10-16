@@ -39,7 +39,7 @@ app.use(
     secure: true,
     httpOnly: true,
     store: MongoStore.create({
-      mongoUrl: process.env.MONGO_URI,
+      mongoUrl: process.env.MONGO_LOCAL_URI,
       ttl: 7 * 24 * 60 * 60,
       autoRemove: "native",
       collectionName: "sessions",

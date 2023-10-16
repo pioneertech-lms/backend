@@ -1,4 +1,5 @@
 import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
+import { Class } from "../../models/Class.js";
 import { User } from "../../models/User.js";
 
 export const deleteUser = catchAsyncError(async (req, res, next) => {
@@ -222,3 +223,277 @@ export const userChangePassword = catchAsyncError(async (req, res, next) => {
         return res.status(200).json({message:"Password updated successfully"});
     }
 });
+
+
+// class routes
+export const getAllClasses = catchAsyncError(async (req,res,next) => {
+  let query = {
+    isDeleted: false,
+    isVerified:true,
+    isActive:true,
+  };
+
+  if(req.query.role){
+    query.role = req.query.role;
+  }
+
+  if(req.query.isDeleted=== "true"){
+    query.isActive = true;
+  }
+  if(req.query.isVerified === "false"){
+    query.isVerified = false;
+  }
+  if(req.query.isActive==="false"){
+    query.isActive = false;
+  }
+
+  let limit = parseInt(req.query.perPage) || 10;
+  let page = req.query.page ? req.query.page : 1;
+  let skip = (page - 1) * (req.query.perPage ? req.query.perPage : 10);
+  let sort = req.query.sort ? {} : { createdAt: -1 };
+  let search = req.query.search;
+
+  if (search) {
+    let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+    const regex = new RegExp(newSearchQuery, "gi");
+    query.$or = [
+      {
+        className: regex,
+      },
+      {
+        description: regex,
+      },
+      {
+        location: regex,
+      },
+      {
+        supportEmail: regex,
+      },
+      {
+        supportPhone: regex,
+      },
+    ];
+  }
+
+  let aggregateQuery = [
+    {
+      $match: query,
+    },
+    {
+      $sort: sort,
+    },
+    {
+      $facet: {
+        data: [
+          {
+            $skip: skip,
+          },
+          {
+            $limit: limit,
+          },
+        ],
+        metadata: [
+          {
+            $match: query,
+          },
+          {
+            $count: "total",
+          },
+        ],
+      },
+    },
+  ];
+
+  const classes = await Class.aggregate(aggregateQuery);
+
+  res.status(200).json({
+    classes: classes[0].data,
+    total: classes[0].metadata[0]
+      ? Math.ceil(classes[0].metadata[0].total / limit)
+      : 0,
+    page,
+    perPage: limit,
+    search: search ? search : "",
+  })
+})
+
+export const createClass = catchAsyncError(async (req,res,next) => {
+  
+  const {
+    className,
+    description,
+    adminUsername,
+    adminPassword,
+    supportEmail,
+    supportPhone,
+    address,
+    city,
+    state,
+    pincode,
+  } = req.body;
+
+  const classFound = await Class.findOne({className});
+  
+  if(classFound){
+    return res.status(502).json({message:"Class with this classname already exists!"});
+  }
+
+  const logo = process.env.BACKEND_URL + (req.files.logoImg[0].path).slice(6);
+
+  let _class = {
+    className,
+    logo,
+  }
+
+  let _admin = {
+    firstName:"admin",
+    lastName:"admin",
+    username:adminUsername,
+    password:adminPassword,
+  }
+
+  if(description){
+    _class.description = description
+  }
+  if(address || city || state || pincode){
+    let _location = {}
+    if(address){
+      _location.address = address
+    }
+    if(city){
+      _location.city = city
+    }
+    if(state){
+      _location.state = state
+    }
+    if(pincode){
+      _location.pincode = pincode
+    }
+
+    _class.location = _location;
+  }
+  if(supportEmail){
+    _admin.email= supportEmail
+    _class.supportEmail= supportEmail
+  }
+  if(supportPhone){
+    _admin.phone= supportPhone
+    _class.supportPhone= supportPhone
+  }
+
+  const admin = await User.create(_admin);
+
+  if(!admin){
+    return res.status(502).json({message:"error creating admin"});
+  }
+
+  _class.admin = admin._id;
+
+  if(req.user.role==="superadmin"){
+    _class.createdBy = req.user._id;
+    _class.isVerified = true;
+  }
+
+  const createClass = await Class.create(_class);
+
+  if(!createClass){
+    return res.status(500).json({message:"error creating class"});
+  }
+
+  return res.status(200).json({message:"Class created successfully"},createClass);
+})
+
+export const getSingleClass = catchAsyncError(async (req,res,next) => {
+  const {id} = req.params;
+
+  const classFound = await Class.findById(id);
+
+  if(!classFound){
+    return res.status(404).json({message:"Class not found!"});
+  }
+  return res.status(200).json(classFound);
+})
+
+export const updateClass = catchAsyncError(async (req,res,next) => {
+  const {
+    className,
+    description,
+    supportEmail,
+    supportPhone,
+    address,
+    city,
+    state,
+    pincode,
+    isVerified,
+    isActive,
+    isDeleted
+  } = req.body;
+
+  const classFound = await Class.findById(req.params.id);
+
+  if(!classFound){
+    return res.status(404).json({message:"Class not found!"});
+  }
+
+  if(className){
+    classFound.className = className;
+  }
+  if(description){
+    classFound.description = description;
+  }
+  if(supportEmail){
+    classFound.supportEmail = supportEmail;
+  }
+  if(supportPhone){
+    classFound.supportPhone = supportPhone;
+  }
+  if(isVerified){
+    classFound.isVerified = isVerified;
+  }
+  if(isActive){
+    classFound.isActive = isActive;
+  }
+  if(isDeleted){
+    classFound.isDeleted = isDeleted;
+  }
+
+  if(address || city || state || pincode){
+    let _location = classFound.location;
+    if(address){
+      _location.address = address
+    }
+    if(city){
+      _location.city = city
+    }
+    if(state){
+      _location.state = state
+    }
+    if(pincode){
+      _location.pincode = pincode
+    }
+
+    classFound.location = _location;
+  }
+  
+  const updateClass = await classFound.save();
+
+  if(!updateClass){
+    return res.status(500).json({message:"error in updating class info"});
+  }
+  return res.status(200).json(updateClass);
+})
+
+export const deleteClass = catchAsyncError(async (req,res,next) => {
+  const {id} = req.params;
+
+  const classFound = await Class.findById(id);
+
+  if(classFound){
+    classFound.isDeleted = true;
+    classFound.save();
+    
+    return res.status(200).json({message:"Class deleted successfully."});
+  }else{
+    return res.status(404).json({message:"Class not found!"});
+  }
+})

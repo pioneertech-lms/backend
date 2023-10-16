@@ -39,7 +39,7 @@
 
    ```
    PORT=8000
-   MONGO_URI=mongodb_connection_uri
+   MONGO_LOCAL_URI=mongodb_connection_uri
    JWT_SECRET=your_secret_key
    SMTP_HOST=smtp_credentials_from_mail_test
    YOUTUBE_API_KEY=if_using_yt_streams
