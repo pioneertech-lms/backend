@@ -316,3 +316,89 @@ export const getAllClasses = catchAsyncError(async (req,res,next) => {
     search: search ? search : "",
   })
 })
+
+export const createClass = catchAsyncError(async (req,res,next) => {
+  
+  const {
+    className,
+    description,
+    adminUsername,
+    adminPassword,
+    supportEmail,
+    supportPhone,
+    address,
+    city,
+    state,
+    pincode,
+  } = req.body;
+
+  const classFound = await Class.findOne({className});
+  
+  if(classFound){
+    return res.status(502).json({message:"Class with this classname already exists!"});
+  }
+
+  const logo = process.env.BACKEND_URL + (req.files.logoImg[0].path).slice(6);
+
+  let _class = {
+    className,
+    logo,
+  }
+
+  let _admin = {
+    firstName:"admin",
+    lastName:"admin",
+    username:adminUsername,
+    password:adminPassword,
+  }
+
+  if(description){
+    _class.description = description
+  }
+  if(address || city || state || pincode){
+    let _location = {}
+    if(address){
+      _location.address = address
+    }
+    if(city){
+      _location.city = city
+    }
+    if(state){
+      _location.state = state
+    }
+    if(pincode){
+      _location.pincode = pincode
+    }
+
+    _class.location = _location;
+  }
+  if(supportEmail){
+    _admin.email= supportEmail
+    _class.supportEmail= supportEmail
+  }
+  if(supportPhone){
+    _admin.phone= supportPhone
+    _class.supportPhone= supportPhone
+  }
+
+  const admin = await User.create(_admin);
+
+  if(!admin){
+    return res.status(502).json({message:"error creating admin"});
+  }
+
+  _class.admin = admin._id;
+
+  if(req.user.role==="superadmin"){
+    _class.createdBy = req.user._id;
+    _class.isVerified = true;
+  }
+
+  const createClass = await Class.create(_class);
+
+  if(!createClass){
+    return res.status(500).json({message:"error creating class"});
+  }
+
+  return res.status(200).json({message:"Class created successfully"},createClass);
+})
