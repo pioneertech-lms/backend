@@ -402,3 +402,30 @@ export const createClass = catchAsyncError(async (req,res,next) => {
 
   return res.status(200).json({message:"Class created successfully"},createClass);
 })
+
+export const getSingleClass = catchAsyncError(async (req,res,next) => {
+  const {id} = req.params;
+
+  const classFound = await Class.findById(id);
+
+  if(!classFound){
+    return res.status(404).json({message:"Class not found!"});
+  }
+  return res.status(200).json(classFound);
+})
+
+
+export const deleteClass = catchAsyncError(async (req,res,next) => {
+  const {id} = req.params;
+
+  const classFound = await Class.findById(id);
+
+  if(classFound){
+    classFound.isDeleted = true;
+    classFound.save();
+    
+    return res.status(200).json({message:"Class deleted successfully."});
+  }else{
+    return res.status(404).json({message:"Class not found!"});
+  }
+})
