@@ -43,6 +43,24 @@ const schema = new mongoose.Schema(
       type: Schema.Types.ObjectId,
       ref: "user",
     },
+    noOfUsers:{
+      type:Number,
+      default: 100
+    },
+    students: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "user",
+        // required: true,
+      },
+    ],
+    teachers: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "user",
+        // required: true,
+      },
+    ],
     isVerified:{
       type:Boolean,
       default:false,
