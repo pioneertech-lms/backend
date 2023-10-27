@@ -66,6 +66,11 @@ const schema = new mongoose.Schema(
     profileImg: {
       type: String,
     },
+    class:{
+      type: Schema.Types.ObjectId,
+      ref: "class",
+      // required: true,
+    },
     subjects:[
       {
         type: String,
