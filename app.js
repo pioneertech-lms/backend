@@ -89,6 +89,18 @@ app.use("/api/user/auth", userAuthRoutes);
 import adminPrimaryRoutes from "./routes/admin/primaryRoute.js";
 app.use("/api/admin/", adminPrimaryRoutes);
 
+// util routes
+import utilsRoute from './routes/user/utilsRoute.js';
+app.use("/api/utils/",utilsRoute);
+
+// class routes
+import classRoute from './routes/class/primaryRoute.js';
+app.use("/api/class/",classRoute);
+
+// class routes
+import questionRoute from './routes/class/questionRoute.js';
+app.use("/api/question/",questionRoute);
+
 // // Teacher route imports
 // import teacherRoutes from "./routes/teacher/primaryRoute.js";
 // app.use("/api/teacher/", teacherRoutes);

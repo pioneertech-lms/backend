@@ -129,6 +129,7 @@ export const updateUser = catchAsyncError(async (req, res, next) => {
     gender,
     description,
     isActive,
+    isVerified,
     isDeleted,
     modules,
   } = req.body;
@@ -143,19 +144,16 @@ export const updateUser = catchAsyncError(async (req, res, next) => {
     user.username = username;
   }
   if(isActive){
-    user.isActive = isActive;
+    user.isActive = isActive == 'true' ? true : false;
+  }
+  if(isVerified){
+    user.isVerified = isVerified == 'true' ? true : false;
   }
   if(isDeleted){
-    user.isDeleted = isDeleted;
+    user.isDeleted = isDeleted== 'true'? true:false;
   }
   if(modules){
     user.modules = modules;
-  }
-  if(role){
-    user.role = role;
-  }
-  if(role){
-    user.role = role;
   }
   if(role){
     user.role = role;

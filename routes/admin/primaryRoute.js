@@ -19,7 +19,8 @@ const router = express.Router();
 router
   .route("/users")
   .get(authorizedUser,checkUserModuleAccess("admin"),getAllUsers)
-  .post(authorizedUser,checkUserModuleAccess("admin"),registerUser);
+  .post(authorizedUser,registerUser);
+  // .post(authorizedUser,checkUserModuleAccess("admin"),registerUser);
 
 router
   .route("/user/:id")
