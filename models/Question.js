@@ -20,8 +20,9 @@ const schema = new mongoose.Schema(
         }
     ],
     answer:{
-        type:String,
-        required:true,
+      type:Number,
+      enum:[1,2,3,4],
+      required:true,
     },
     explanation:{
         type:String,

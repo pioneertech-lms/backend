@@ -97,9 +97,13 @@ app.use("/api/utils/",utilsRoute);
 import classRoute from './routes/class/primaryRoute.js';
 app.use("/api/class/",classRoute);
 
-// class routes
+// question routes
 import questionRoute from './routes/class/questionRoute.js';
 app.use("/api/question/",questionRoute);
+
+// test routes
+import testRoute from './routes/class/testRoute.js';
+app.use("/api/test/",testRoute);
 
 // // Teacher route imports
 // import teacherRoutes from "./routes/teacher/primaryRoute.js";
