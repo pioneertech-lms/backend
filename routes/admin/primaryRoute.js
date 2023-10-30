@@ -16,21 +16,22 @@ import { registerUser } from "../../controllers/user/authController.js";
 
 const router = express.Router();
 
+// TODO: add checkUserModuleAccess("role") for every request.
 router
   .route("/users")
-  .get(authorizedUser,checkUserModuleAccess("admin"),getAllUsers)
+  .get(authorizedUser,getAllUsers)
   .post(authorizedUser,registerUser);
   // .post(authorizedUser,checkUserModuleAccess("admin"),registerUser);
 
 router
   .route("/user/:id")
-  .get(authorizedUser,checkUserModuleAccess("admin"),getSingleUser)
-  .put(authorizedUser,checkUserModuleAccess("admin"),updateUser)
-  .delete(authorizedUser,checkUserModuleAccess("admin"),deleteUser);
+  .get(authorizedUser,getSingleUser)
+  .put(authorizedUser,updateUser)
+  .delete(authorizedUser,deleteUser);
 
 router
   .route("/update-password/:id")
-  .put(authorizedUser,checkUserModuleAccess("admin"),userChangePassword);
+  .put(authorizedUser,userChangePassword);
 
   // class crud rautes = accessible for super admin only
 router
