@@ -8,12 +8,8 @@ const schema = new mongoose.Schema(
     },
     type:{
         type:String,
-        enum:["random","linear","manual"],
+        enum:["random","live","manual"],
         required:true
-    },
-    duration:{
-        type:Number,//in minutes
-        // required:true
     },
     subjects:[
         {
@@ -21,20 +17,30 @@ const schema = new mongoose.Schema(
           enum: ["physics","chemistry","mathematics","biology"]
         }
       ],
-    questions:[
+      questions:[
         {
           type: Schema.Types.ObjectId,
           ref:"question",
           required:true,
         }
       ],
-    isSaved: {
-      type: Boolean,
-      default: true,
+      duration:{
+          type:Number,//in minutes
+          // required:true
+      },
+      startTime:{
+        type:Date,
+      },
+      endTime:{
+        type:Date,
+      },
+      isSaved: {
+        type: Boolean,
+        default: true,
+      },
     },
-  },
-  {
-    timestamps: true,
+    {
+      timestamps: true,
   }
 );
 
