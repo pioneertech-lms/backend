@@ -9,6 +9,8 @@ import {
     addMultipleQuestions,
 } from "../../controllers/question/index.js";
 
+import { checkUserModuleAccess, authorizedUser } from "../../middleWares/accessAuth.js";
+
 const router = express.Router();
 
 router
@@ -24,7 +26,7 @@ router
 
 router
     .route("/bulk-add")
-    .post(upload,addMultipleQuestions);
+    .post(authorizedUser,upload,addMultipleQuestions);
 
 
 export default router;
