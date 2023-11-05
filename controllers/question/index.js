@@ -1,9 +1,8 @@
 import { catchAsyncError } from "../../middleWares/catchAsyncError.js"; 
 import { Question } from "../../models/Question.js";
 
-import xlsx from "xlsx";
-
-
+import ExcelJS from "exceljs";
+import { readFileSync } from "fs";
 
 export const getAllQuestions = catchAsyncError(async (req,res,next) => {
     let query = {
@@ -241,73 +240,89 @@ export const deleteSingleQuestion = catchAsyncError(async (req,res,next) => {
 })
 
 export const addMultipleQuestions = catchAsyncError(async (req,res,next) => {
+  
+const buffer = readFileSync(`./public${(req.files.questionSet[0].path).slice(6)}`);
+const workbook = new ExcelJS.Workbook();
+await workbook.xlsx.load(buffer);
 
-    const workbook = xlsx.readFile(`./public${(req.files.questionSet[0].path).slice(6)}`);
+const worksheet = workbook.worksheets[0];
 
-    const sheetNames = workbook.SheetNames;
+if (worksheet.rowCount === 0) {
+  console.error("excel sheet is empty");
+    return res.status(502).json({ message: "excel sheet is empty" });
+}
 
-    const xlData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetNames[0]]);
+let results = {
+  unsavedQues: [],
+  message: "questions added successfully",
+};
 
-    if(xlData.length==0){
-        return res.status(502).json({message:"excel sheet is empty"});
+worksheet.eachRow(async (row, rowNumber) => {
+  // console.log("Row " + rowNumber + " = " + JSON.stringify(row.values));
+
+  let _question = {};
+
+  // Check for empty cells before processing
+  _question.number = row.getCell(1).value || null; // Column 1: number
+  _question.question = row.getCell(2).value || null; // Column 2: question
+
+  let _options = [];
+  if (row.getCell(4).value) _options.push(row.getCell(4).value); // Column 4: optionOne
+  if (row.getCell(6).value) _options.push(row.getCell(6).value); // Column 6: optionTwo
+  if (row.getCell(8).value) _options.push(row.getCell(8).value); // Column 8: optionThree
+  if (row.getCell(10).value) _options.push(row.getCell(10).value); // Column 10: optionFour
+  _question.options = _options;
+
+  _question.answer = row.getCell(12).value || null; // Column 12: answer
+  _question.explanation = row.getCell(13).value || null; // Column 13: explanation
+  _question.topic = row.getCell(15).value || null; // Column 15: topic
+  _question.yearOfAppearance = row.getCell(16).value || null; // Column 16: yearOfAppearance
+  _question.exam = row.getCell(17).value || null; // Column 17: exam
+  _question.marks = row.getCell(18).value || null; // Column 18: marks
+  _question.creator = req.user._id;
+
+  const images = worksheet.getImages();
+  images.forEach((img) => {
+    const imgRow = img.range.tl.row;
+    const imageBuf = workbook.getImage(img.imageId);
+    if (imgRow === rowNumber - 1) {
+      const dataUrl = `<img src='data:image/${imageBuf.extension};base64,${imageBuf.buffer.toString('base64')}'></img> `;
+
+      switch (img.range.tl.col) {
+        case 2: // questionImage
+          _question.question = _question.question + dataUrl;
+          break;
+        case 4: // optionOneImage
+          _question.options[0] =_question.options[0] + dataUrl;
+          break;
+        case 6: // optionTwoImage
+        _question.options[1] =_question.options[1] + dataUrl;
+          break;
+        case 8: // optionThreeImage
+        _question.options[2] =_question.options[2] + dataUrl;
+          break;
+        case 10: // optionFourImage
+        _question.options[3] =_question.options[3] + dataUrl;
+          break;
+        case 14: // Column 14: explanationImage
+          _question.explanation = _question.explanation + dataUrl;
+          break;
+        default:
+          break;
+      }
     }
+  });
 
-    let results = {
-      unsavedQues:[],
-      message:"questions added successfully"
-    };
-    for(let i =0; i<xlData.length ; i++){
-
-      console.log(xlData[i]);
-
-      let _question = {};
-
-      _question.number=xlData[i].number;
-      _question.question=xlData[i].question;
-      _question.answer=xlData[i].answer;
-      _question.topic=xlData[i].topic;
-
-      let _options = []
-
-      if(xlData[i].optionOne){
-        _options.push(xlData[i].optionOne);
-      }
-      if(xlData[i].optionTwo){
-        _options.push(xlData[i].optionTwo);
-      }
-      if(xlData[i].optionThree){
-        _options.push(xlData[i].optionThree);
-      }
-      if(xlData[i].optionFour){
-        _options.push(xlData[i].optionFour);
-      }
-
-      _question.options = _options;
-
-      if(xlData[i].explanation){
-        _question.explanation=xlData[i].explanation;
-      }
-      if(xlData[i].yearOfAppearance){
-        _question.yearOfAppearance=xlData[i].yearOfAppearance;
-      }
-      if(xlData[i].exam){
-        _question.exam=xlData[i].exam;
-      }
-      if(xlData[i].marks){
-        _question.marks=xlData[i].marks;
-      }
-
-      try {
-        await Question.create(_question);
-      } catch (error) {
-        // console.log(error._message,"THIS IS AN ERROR OCCURED");
-        results.error = error._message;
-        results.unsavedQues.push(xlData[i]);
-      }
+  if(_question.number==="number"){
+    return;
+  }else {
+    try {
+      await Question.create(_question);
+    } catch (error) {
+      results.error = error._message;
+      results.unsavedQues.push(row.values);
     }
-
-    if(results.unsavedQues.length != 0) {
-      results.message = "Error while adding few questions.please add them manually"
-    }
-    return res.status(200).json(results);
+  }
+});
+return res.status(200).json(results);
 })
