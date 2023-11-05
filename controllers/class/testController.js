@@ -115,7 +115,43 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
     }
     
     if(_test === "random"){
-
+      if(req.body.topics && req.body.topics.length !=0){
+        let query = {
+          isDeleted:false,
+        }
+        let aggregateQuery = [
+          {
+            $match: query,
+          },
+          {
+            $sample: { size: noOfQues }
+          },
+          {
+            $facet: {
+              data: [
+                {
+                  $skip: skip,
+                },
+                {
+                  $limit: limit,
+                },
+              ],
+              metadata: [
+                {
+                  $match: query,
+                },
+                {
+                  $count: "total",
+                },
+              ],
+            },
+          },
+        ];
+      
+        const questions = await Test.aggregate(aggregateQuery);
+      
+        
+      }
     }
     if(_test === "manual"){
         _test.questions = questions;
