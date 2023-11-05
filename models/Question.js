@@ -38,6 +38,11 @@ const schema = new mongoose.Schema(
         type:String,
         enum:["cet","jee","neet"]
     },
+    creator:{
+        type: Schema.Types.ObjectId,
+        ref: "user",
+        // required: true,
+    },
     isDeleted: {
       type: Boolean,
       default: false,
