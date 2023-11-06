@@ -4,90 +4,84 @@ import { Question } from "../../models/Question.js";
 import ExcelJS from "exceljs";
 import { readFileSync } from "fs";
 
-export const getAllQuestions = catchAsyncError(async (req,res,next) => {
-    let query = {
-        isDeleted: false,
-      };
-    
-      if(req.query.isDeleted=== "true"){
-        query.isActive = true;
-      }
-    
-      let limit = parseInt(req.query.perPage) || 10;
-      let page = req.query.page ? req.query.page : 1;
-      let skip = (page - 1) * (req.query.perPage ? req.query.perPage : 10);
-      let sort = req.query.sort ? {} : { createdAt: -1 };
-      let search = req.query.search;
-    
-      if (search) {
-        let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-        const regex = new RegExp(newSearchQuery, "gi");
-        query.$or = [
+  export const getAllQuestions = catchAsyncError(async (req,res,next) => {
+      let query = {
+          isDeleted: false,
+        };
+      
+        if(req.query.isDeleted=== "true"){
+          query.isActive = true;
+        }
+      
+        let limit = parseInt(req.query.perPage) || 10;
+        let page = req.query.page ? req.query.page : 1;
+        let skip = (page - 1) * (req.query.perPage ? req.query.perPage : 10);
+        let sort = req.query.sort ? {} : { createdAt: -1 };
+        let search = req.query.search;
+      
+        if (search) {
+          let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+          const regex = new RegExp(newSearchQuery, "gi");
+          query.$or = [
+            {
+              number: regex,
+            },
+            {
+              question: regex,
+            },
+            {
+              options: regex,
+            },
+            {
+              explanation: regex,
+            },
+            {
+              exam: regex,
+            },
+            {
+              yearOfAppearance: regex,
+            },
+          ];
+        }
+
+        // Filter by topics
+        if (req.query.topic) {
+          const topics = Array.isArray(req.query.topic) ? req.query.topic : [req.query.topic];
+          query.topic = { $in: topics };
+        }      
+      
+        let aggregateQuery = [
           {
-            number: regex,
+            $match: query,
           },
           {
-            question: regex,
+            $sort: sort,
           },
           {
-            options: regex,
-          },
-          {
-            explanation: regex,
-          },
-          {
-            topic: regex,
-          },
-          {
-            exam: regex,
-          },
-          {
-            yearOfAppearance: regex,
+            $facet: {
+              data: [
+                { $skip: skip },
+                { $limit: limit },
+              ],
+              metadata: [
+                { $count: "total" },
+              ],
+            },
           },
         ];
-      }
-    
-      let aggregateQuery = [
-        {
-          $match: query,
-        },
-        {
-          $sort: sort,
-        },
-        {
-          $facet: {
-            data: [
-              {
-                $skip: skip,
-              },
-              {
-                $limit: limit,
-              },
-            ],
-            metadata: [
-              {
-                $match: query,
-              },
-              {
-                $count: "total",
-              },
-            ],
-          },
-        },
-      ];
-    
-      const questions = await Question.aggregate(aggregateQuery);
-    
-      res.status(200).json({
-        questions: questions[0].data,
-        total: questions[0].metadata[0]
-          ? Math.ceil(questions[0].metadata[0].total / limit)
-          : 0,
-        page,
-        perPage: limit,
-        search: search ? search : "",
-      })
-})
+            
+        const questions = await Question.aggregate(aggregateQuery);
+      
+        res.status(200).json({
+          questions: questions[0].data,
+          total: questions[0].metadata[0]
+            ? Math.ceil(questions[0].metadata[0].total / limit)
+            : 0,
+          page,
+          perPage: limit,
+          search: search ? search : "",
+        })
+  })
 
 export const addSingleQuestion = catchAsyncError(async (req,res,next) => {
     const {
@@ -226,15 +220,13 @@ export const updateQuestion = catchAsyncError(async (req,res,next) => {
 })
 
 export const deleteSingleQuestion = catchAsyncError(async (req,res,next) => {
-    const {id } = req.body;
-
-    const questionFound = Question.findById(id);
+    const questionFound = await Question.findById(req.params.id);
 
     if(!questionFound){
         return res.status(404).json({message:"question not found!"});
     } else {
         questionFound.isDeleted = true;
-
+        await questionFound.save();
         return res.status(200).json({message:"question deleted successfully"});
     }
 })
