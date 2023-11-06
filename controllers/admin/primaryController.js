@@ -132,6 +132,8 @@ export const updateUser = catchAsyncError(async (req, res, next) => {
     isVerified,
     isDeleted,
     modules,
+    exams,
+    subjects,
   } = req.body;
 
   if(firstName){
@@ -154,6 +156,12 @@ export const updateUser = catchAsyncError(async (req, res, next) => {
   }
   if(modules){
     user.modules = modules;
+  }
+  if(subjects){
+    user.subjects = subjects;
+  }
+  if(exams){
+    user.exams = exams;
   }
   if(role){
     user.role = role;
