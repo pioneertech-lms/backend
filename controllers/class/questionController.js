@@ -4,58 +4,30 @@ import { Question } from "../../models/Question.js";
 import ExcelJS from "exceljs";
 import { readFileSync } from "fs";
 
-  export const getAllQuestions = catchAsyncError(async (req,res,next) => {
-      let query = {
-          isDeleted: false,
-        };
-      
-        if(req.query.isDeleted=== "true"){
-          query.isActive = true;
-        }
-      
-        let limit = parseInt(req.query.perPage) || 10;
-        let page = req.query.page ? req.query.page : 1;
-        let skip = (page - 1) * (req.query.perPage ? req.query.perPage : 10);
-        let sort = req.query.sort ? {} : { createdAt: -1 };
-        let search = req.query.search;
-      
-        if (search) {
-          let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-          const regex = new RegExp(newSearchQuery, "gi");
-          query.$or = [
-            {
-              number: regex,
-            },
-            {
-              question: regex,
-            },
-            {
-              options: regex,
-            },
-            {
-              explanation: regex,
-            },
-            {
-              exam: regex,
-            },
-            {
-              yearOfAppearance: regex,
-            },
-          ];
-        }
-
-        // Filter by topics
-        if (req.query.topic) {
-          const topics = Array.isArray(req.query.topic) ? req.query.topic : [req.query.topic];
-          query.topic = { $in: topics };
-        }      
-      
-        let aggregateQuery = [
+export const getAllQuestions = catchAsyncError(async (req,res,next) => {
+    let query = {
+        isDeleted: false,
+      };
+    
+      if(req.query.isDeleted=== "true"){
+        query.isActive = true;
+      }
+    
+      let limit = parseInt(req.query.perPage) || 10;
+      let page = parseInt(req.query.page, 10) || 1;
+      let skip = (page - 1) * limit;
+      let sort = req.query.sort ? {} : { createdAt: -1 };
+      let search = req.query.search;
+    
+      if (search) {
+        let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+        const regex = new RegExp(newSearchQuery, "gi");
+        query.$or = [
           {
-            $match: query,
+            number: regex,
           },
           {
-            $sort: sort,
+            question: regex,
           },
           {
             options: regex,
