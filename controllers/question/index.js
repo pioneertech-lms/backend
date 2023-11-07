@@ -4,84 +4,84 @@ import { Question } from "../../models/Question.js";
 import ExcelJS from "exceljs";
 import { readFileSync } from "fs";
 
-  export const getAllQuestions = catchAsyncError(async (req,res,next) => {
-      let query = {
-          isDeleted: false,
-        };
-      
-        if(req.query.isDeleted=== "true"){
-          query.isActive = true;
-        }
-      
-        let limit = parseInt(req.query.perPage) || 10;
-        let page = req.query.page ? req.query.page : 1;
-        let skip = (page - 1) * (req.query.perPage ? req.query.perPage : 10);
-        let sort = req.query.sort ? {} : { createdAt: -1 };
-        let search = req.query.search;
-      
-        if (search) {
-          let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-          const regex = new RegExp(newSearchQuery, "gi");
-          query.$or = [
-            {
-              number: regex,
-            },
-            {
-              question: regex,
-            },
-            {
-              options: regex,
-            },
-            {
-              explanation: regex,
-            },
-            {
-              exam: regex,
-            },
-            {
-              yearOfAppearance: regex,
-            },
-          ];
-        }
-
-        // Filter by topics
-        if (req.query.topic) {
-          const topics = Array.isArray(req.query.topic) ? req.query.topic : [req.query.topic];
-          query.topic = { $in: topics };
-        }      
-      
-        let aggregateQuery = [
+export const getAllQuestions = catchAsyncError(async (req,res,next) => {
+    let query = {
+        isDeleted: false,
+      };
+    
+      if(req.query.isDeleted=== "true"){
+        query.isActive = true;
+      }
+    
+      let limit = parseInt(req.query.perPage) || 10;
+      let page = parseInt(req.query.page, 10) || 1;
+      let skip = (page - 1) * limit;
+      let sort = req.query.sort ? {} : { createdAt: -1 };
+      let search = req.query.search;
+    
+      if (search) {
+        let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+        const regex = new RegExp(newSearchQuery, "gi");
+        query.$or = [
           {
-            $match: query,
+            number: regex,
           },
           {
-            $sort: sort,
+            question: regex,
           },
           {
-            $facet: {
-              data: [
-                { $skip: skip },
-                { $limit: limit },
-              ],
-              metadata: [
-                { $count: "total" },
-              ],
-            },
+            options: regex,
+          },
+          {
+            explanation: regex,
+          },
+          {
+            exam: regex,
+          },
+          {
+            yearOfAppearance: regex,
           },
         ];
-            
-        const questions = await Question.aggregate(aggregateQuery);
-      
-        res.status(200).json({
-          questions: questions[0].data,
-          total: questions[0].metadata[0]
-            ? Math.ceil(questions[0].metadata[0].total / limit)
-            : 0,
-          page,
-          perPage: limit,
-          search: search ? search : "",
-        })
-  })
+      }
+
+      // Filter by topics
+      if (req.query.topic) {
+        const topics = Array.isArray(req.query.topic) ? req.query.topic : [req.query.topic];
+        query.topic = { $in: topics };
+      }      
+    
+      let aggregateQuery = [
+        {
+          $match: query,
+        },
+        {
+          $sort: sort,
+        },
+        {
+          $facet: {
+            data: [
+              { $skip: skip },
+              { $limit: limit },
+            ],
+            metadata: [
+              { $count: "total" },
+            ],
+          },
+        },
+      ];
+          
+      const questions = await Question.aggregate(aggregateQuery);
+      const totalQuestions = questions[0].metadata[0] ? questions[0].metadata[0].total : 0;
+      const totalPages = Math.ceil(totalQuestions / limit);
+    
+      res.status(200).json({
+        questions: questions[0].data,
+        total: totalPages,
+        page,
+        perPage: limit,
+        search: search ? search : "",
+      })
+})
 
 export const addSingleQuestion = catchAsyncError(async (req,res,next) => {
     const {
@@ -280,7 +280,7 @@ worksheet.eachRow(async (row, rowNumber) => {
     if (imgRow === rowNumber - 1) {
       const dataUrl = `<img src='data:image/${imageBuf.extension};base64,${imageBuf.buffer.toString('base64')}'></img> `;
 
-      switch (img.range.tl.col) {
+      switch (Math.round(img.range.tl.col)) {
         case 2: // questionImage
           _question.question = _question.question + dataUrl;
           break;
