@@ -7,7 +7,7 @@ import {
     updateQuestion,
     deleteSingleQuestion,
     addMultipleQuestions,
-} from "../../controllers/question/index.js";
+} from "../../controllers/class/questionController.js";
 
 import { checkUserModuleAccess, authorizedUser } from "../../middleWares/accessAuth.js";
 
