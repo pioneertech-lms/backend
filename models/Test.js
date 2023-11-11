@@ -24,6 +24,11 @@ const schema = new mongoose.Schema(
           required:true,
         }
       ],
+      creator:{
+        type: Schema.Types.ObjectId,
+        ref: "user",
+        // required: true,
+      },
       duration:{
           type:Number,//in minutes
           // required:true
