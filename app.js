@@ -101,6 +101,10 @@ app.use("/api/class/",classRoute);
 import questionRoute from './routes/class/questionRoute.js';
 app.use("/api/question/",questionRoute);
 
+// report routes
+import reportRoute from './routes/class/reportRoute.js';
+app.use("/api/report/",reportRoute);
+
 // test routes
 import testRoute from './routes/class/testRoute.js';
 app.use("/api/test/",testRoute);
