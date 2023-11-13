@@ -5,4 +5,4 @@ npm-debug.log
 /config/config.env
 .DS_Store
 /logs
-# public/uploads/
+public/uploads/
