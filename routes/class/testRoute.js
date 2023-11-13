@@ -6,12 +6,14 @@ import {
     updateTest,
 } from "../../controllers/class/testController.js";
 
+import {authorizedUser} from "../../middleware/accessAuth.js";
+
 const router = express.Router();
 
 router
   .route("/")
   .get(getAllTests)
-  .post(createTest);
+  .post(authorizedUser,createTest);
 
 router
     .route("/:id")
