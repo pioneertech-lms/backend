@@ -4,6 +4,8 @@ const schema = new mongoose.Schema(
   {
     number:{
         type:Number,
+        unique:true,
+        required:true,
     },
     marks:{
         type:Number,
