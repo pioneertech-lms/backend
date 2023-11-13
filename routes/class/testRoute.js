@@ -6,7 +6,7 @@ import {
     updateTest,
 } from "../../controllers/class/testController.js";
 
-import {authorizedUser} from "../../middleware/accessAuth.js";
+import { authorizedUser } from "../../middleWares/accessAuth.js";
 
 const router = express.Router();
 
