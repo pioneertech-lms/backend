@@ -91,6 +91,10 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
         endTime,
     } = req.body;
 
+    if(!type){
+      return res.status(500).json({message: "invalid test type!"});
+    }
+
     const foundName = await Test.findOne({name});
 
     if(foundName){
@@ -114,8 +118,9 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
      _test.endTime= endTime;   
     }
     
-    if(_test === "random"){
+    if(_test.type === "random"){
       if(req.body.topics && req.body.topics.length !=0){
+        const {noOfQues} = req.body;
         let query = {
           isDeleted:false,
         }
@@ -126,26 +131,6 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
           {
             $sample: { size: noOfQues }
           },
-          {
-            $facet: {
-              data: [
-                {
-                  $skip: skip,
-                },
-                {
-                  $limit: limit,
-                },
-              ],
-              metadata: [
-                {
-                  $match: query,
-                },
-                {
-                  $count: "total",
-                },
-              ],
-            },
-          },
         ];
       
         const questions = await Test.aggregate(aggregateQuery);
@@ -153,10 +138,10 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
         
       }
     }
-    if(_test === "manual"){
+    if(_test.type === "manual"){
         _test.questions = questions;
     }
-    if(_test === "live"){
+    if(_test.type === "live"){
         
     }
 
