@@ -1,3 +1,4 @@
+import { configDotenv } from "dotenv";
 import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
 import {Test} from "../../models/Test.js";
 
@@ -91,6 +92,10 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
         endTime,
     } = req.body;
 
+    if(!type){
+      return res.status(500).json({message: "invalid test type!"});
+    }
+
     const foundName = await Test.findOne({name});
 
     if(foundName){
@@ -114,10 +119,21 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
      _test.endTime= endTime;   
     }
     
-    if(_test === "random"){
-      if(req.body.topics && req.body.topics.length !=0){
+    if(_test.type === "random"){
+
+      const {questions,total} = req.body;
+
+      if(!questions || !total){
+        return res.status(500).json({message:"pass questions and total!"});
+      }
+      
+      let result = [];
+
+      for(let i=0;i<questions.topics.length;i++){
         let query = {
           isDeleted:false,
+          creator: req.user._id,
+          topic: questions.topics[i],
         }
         let aggregateQuery = [
           {
@@ -127,36 +143,22 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
             $sample: { size: noOfQues }
           },
           {
-            $facet: {
-              data: [
-                {
-                  $skip: skip,
-                },
-                {
-                  $limit: limit,
-                },
-              ],
-              metadata: [
-                {
-                  $match: query,
-                },
-                {
-                  $count: "total",
-                },
-              ],
+            $project: {
+              _id: 1,
             },
           },
         ];
-      
+
         const questions = await Test.aggregate(aggregateQuery);
       
-        
+        result.push(questions);
+        _test.questions = result;
       }
     }
-    if(_test === "manual"){
+    if(_test.type === "manual"){
         _test.questions = questions;
     }
-    if(_test === "live"){
+    if(_test.type === "live"){
         
     }
 
