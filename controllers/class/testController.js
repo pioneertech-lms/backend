@@ -1,3 +1,4 @@
+import { configDotenv } from "dotenv";
 import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
 import {Test} from "../../models/Test.js";
 
@@ -119,10 +120,20 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
     }
     
     if(_test.type === "random"){
-      if(req.body.topics && req.body.topics.length !=0){
-        const {noOfQues} = req.body;
+
+      const {questions,total} = req.body;
+
+      if(!questions || !total){
+        return res.status(500).json({message:"pass questions and total!"});
+      }
+      
+      let result = [];
+
+      for(let i=0;i<questions.topics.length;i++){
         let query = {
           isDeleted:false,
+          creator: req.user._id,
+          topic: questions.topics[i],
         }
         let aggregateQuery = [
           {
@@ -131,11 +142,17 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
           {
             $sample: { size: noOfQues }
           },
+          {
+            $project: {
+              _id: 1,
+            },
+          },
         ];
-      
+
         const questions = await Test.aggregate(aggregateQuery);
       
-        
+        result.push(questions);
+        _test.questions = result;
       }
     }
     if(_test.type === "manual"){
