@@ -58,6 +58,8 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
     dob,
     gender,
     description,
+    exams,
+    subjects,
   } = req.body;
 
   if (password !== confirmPassword) {
@@ -105,6 +107,12 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
   }
   if(description){
     _user.description = description;
+  }
+  if(subjects){
+    _user.subjects = subjects;
+  }
+  if(exams){
+    _user.exams = exams;
   }
   
 
