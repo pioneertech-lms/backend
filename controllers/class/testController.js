@@ -1,10 +1,12 @@
 import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
 import {Test} from "../../models/Test.js";
 import { Question } from "../../models/Question.js";
+import libre from 'libreoffice-convert';
+import fs from 'fs';
+import path from 'path';
 
 export const getAllTeacherTests = catchAsyncError(async (req,res,next) => {
     let query = {
-        isDeleted: false,
         creator:req.user._id,
       };
     
@@ -311,3 +313,91 @@ export const  updateTest = catchAsyncError(async (req,res,next) => {
          return res.status(501).json({message:"something went wrong",error:error.message});
      }
 });
+
+import puppeteer from 'puppeteer'
+
+export const generateTest = catchAsyncError(async (req,res,next) => {
+    const {id} = req.params;
+
+    const testFound = await Test.findById(id)
+            .populate('questions')
+            .populate('creator');
+            // return console.log(testFound);
+
+    if(!testFound){
+        return res.status(404).json({message:"test not found!"});
+    }
+
+    // generate pdf
+    const questions = testFound.questions;
+       const browser = await puppeteer.launch({ headless: false});
+      const page = await browser.newPage();
+  
+      await page.goto(process.env.BACKEND_URL +'/templates/test_template.html');
+  
+      await page.evaluate((testFound,questions) => {
+        if(testFound.name){
+          const testName = document.getElementById('test-name');
+          testName.innerHTML = testFound.name;
+        }
+        if(testFound.duration){
+          const duration = document.getElementById('duration'); 
+          duration.innerHTML = testFound.duration;
+        }
+        if(testFound.subjects){
+          const subjects = document.getElementById('subjects');
+          subjects.innerHTML = testFound.subjects.join(', ');
+        }
+        if(testFound.creator.logo){
+          const logo = document.getElementById('logo');
+          logo.setAttribute('src', testFound.creator.logo)
+        }
+        if(testFound.creator.watermark){
+          const watermark = document.getElementById('watermark');
+          watermark.setAttribute('src', testFound.creator.watermark)
+        }
+        const questionsContainer = document.getElementById('questions-container');
+          questions.forEach((question,i) => {
+              const questionHTML = `
+                  <div class="question">
+                      <p>${i+1}. ${question.question}</p>
+                      <div class="options">
+                          ${question.options.map((option, index) => `<label><input type="radio" name="q${i}" value="${index}"> ${option}</label><br>`).join('')}
+                      </div>
+                  </div>
+              `;
+              questionsContainer.innerHTML += questionHTML;
+          });
+      }, testFound,questions);
+  
+      let pdfPath = `./public/generated/questionPaperPdf-${Date.now() +Math.floor(Math.random() * 90000)}.pdf`
+      let docPath = `./public/generated/questionPaperDoc-${Date.now() +Math.floor(Math.random() * 90000)}.docx`
+      // Generate PDF with watermark
+      await page.pdf({ path: pdfPath, format: 'A4', printBackground: true });
+      
+      await browser.close();
+
+      // converting to docx
+      try {
+        const tempDir = path.dirname(pdfPath);
+        fs.mkdirSync(tempDir, { recursive: true });
+    
+        const input = fs.readFileSync(pdfPath);
+    
+        libre.convert(input, '.docx', undefined, (err, result) => {
+          if (err) {
+            console.error(`Error converting PDF to DOCX: ${err}`);
+          } else {
+            fs.writeFileSync(docPath, result);
+            console.log('Conversion successful');
+          }
+        });
+      } catch (error) {
+        console.error('Error handling PDF to DOCX conversion:', error);
+      }
+
+      return res.status(200).json({message:"test generated successfully",pdf:process.env.BACKEND_URL + pdfPath.slice(6),doc:process.env.BACKEND_URL + docPath.slice(6)});
+  });
+
+
+  
