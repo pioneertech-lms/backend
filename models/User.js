@@ -8,11 +8,11 @@ const schema = new mongoose.Schema(
   {
     firstName: {
       type: String,
-      required: [true, "Please enter your first name."],
+      // required: [true, "Please enter your first name."],
     },
     lastName: {
       type: String,
-      required: [true, "Please enter your last name."],
+      // required: [true, "Please enter your last name."],
     },
     username: {
       type: String,
@@ -21,7 +21,7 @@ const schema = new mongoose.Schema(
     },
     slug: {
       type: String,
-      required: true,
+      // required: true,
       unique: true,
     },
     email: {
@@ -51,7 +51,7 @@ const schema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, "Please enter your password."],
-      minLength: [8, "Password must be greater than 8 characters."],
+      minLength: [6, "Password must be greater than 6 characters."],
       select: false,
     },    
     role: {
