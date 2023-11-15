@@ -115,6 +115,15 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
   if(exams){
     _user.exams = exams;
   }
+  if(req.files['profileImg']){
+    _user.profileImg = process.env.BACKEND_URL + (req.files.profileImg[0].path).slice(6);
+  }
+  if(req.files['logoImg']){
+    _user.logoImg = process.env.BACKEND_URL + (req.files.logoImg[0].path).slice(6);
+  }
+  if(req.files['watermarkImg']){
+    _user.watermarkImg = process.env.BACKEND_URL + (req.files.watermarkImg[0].path).slice(6);
+  }
   
 
   if(address || city || state || pincode){
