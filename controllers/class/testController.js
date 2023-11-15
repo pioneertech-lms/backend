@@ -1,6 +1,7 @@
 import { configDotenv } from "dotenv";
 import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
 import {Test} from "../../models/Test.js";
+import { Question } from "../../models/Question.js";
 
 export const getAllTests = catchAsyncError(async (req,res,next) => {
     let query = {
@@ -113,10 +114,10 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
      _test.subjects= subjects;   
     }
     if(startTime){
-     _test.startTime= startTime;   
+     _test.startTime= new Date(startTime);   
     }
     if(endTime){
-     _test.endTime= endTime;   
+     _test.endTime= new Date(endTime);   
     }
     
     if(_test.type === "random"){
@@ -127,20 +128,19 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
         return res.status(500).json({message:"pass questions and total!"});
       }
       
-      let result = [];
-
-      for(let i=0;i<questions.topics.length;i++){
+      for(let {topic, noOfQue} of questions){
+        console.log(topic, noOfQue);
         let query = {
           isDeleted:false,
           creator: req.user._id,
-          topic: questions.topics[i],
+          topic: topic,
         }
         let aggregateQuery = [
           {
             $match: query,
           },
           {
-            $sample: { size: noOfQues }
+            $sample: { size: noOfQue }
           },
           {
             $project: {
@@ -149,9 +149,9 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
           },
         ];
 
-        const questions = await Test.aggregate(aggregateQuery);
-      
-        result.push(questions);
+        const result = (await Question.aggregate(aggregateQuery))
+          .map(item => item._id);
+          
         _test.questions = result;
       }
     }
