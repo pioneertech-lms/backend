@@ -122,7 +122,7 @@ app.use("/api/test/",testRoute);
 // app.use("/api/student",studentRoutes);
 
 // test route
-app.get("/test", (req,res)=>{
+app.get("/ping", (req,res)=>{
   // res.render("test");
   res.status(200).send("Server is up & running...")
 })
