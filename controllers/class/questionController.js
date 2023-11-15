@@ -91,13 +91,14 @@ export const addSingleQuestion = catchAsyncError(async (req,res,next) => {
         options,
         answer,
         explanation,
+        isCommon,
         topic,
         yearOfAppearance,
         exam,
     } = req.body;
 
     
-    const questionFound = await Question.findOne({question});
+    const questionFound = await Question.findOne({question,creator:req.user._id});
     if(questionFound){
         return res.status(501).json({message:"question already exist!"});
     }
@@ -105,7 +106,8 @@ export const addSingleQuestion = catchAsyncError(async (req,res,next) => {
     let _question =  {
         question,
         answer,
-        options:[]
+        options:[],
+        creator:req.user._id,
     };
     
     if(topic){
@@ -126,6 +128,8 @@ export const addSingleQuestion = catchAsyncError(async (req,res,next) => {
     if(exam){
         _question.exam = exam
     }
+    
+    _question.isCommon= isCommon && isCommon === "true" ? true : false; 
 
     if(options){
         for(let i=0; i< options.length;i++){
@@ -133,11 +137,21 @@ export const addSingleQuestion = catchAsyncError(async (req,res,next) => {
         }
     }
 
-    const questionCreate = await Question.create(_question);
-
-    if(questionCreate){
+    
+    try {
+      const questionCreate = await Question.create(_question);
+      if(questionCreate){
         return res.status(200).json({message:"question added successfully"});
+      }
+    } catch (err) {
+      console.log(err)
+      return res.status(501).json({message:"something went wrong"});
+      // if (err.code === "DUPLICATE_NUMBER_WARNING") {
+      // } else {
+      //   console.error(err);
+      // }
     }
+
 
 })
 
