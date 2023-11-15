@@ -81,6 +81,10 @@ app.use(function (req, res, next) {
   next();
 });
 
+// seed script
+import {seed} from "./config/seed.js";
+seed();
+
 // User route imports
 import userAuthRoutes from "./routes/user/authRoute.js";
 app.use("/api/user/auth", userAuthRoutes);
