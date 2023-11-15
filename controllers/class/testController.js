@@ -106,6 +106,7 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
     let _test = {
         name,
         type,
+        creator: req.user._id,
     }
     if(duration){
      _test.duration= duration ;  
