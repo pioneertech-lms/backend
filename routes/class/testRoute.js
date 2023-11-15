@@ -5,6 +5,7 @@ import {
     createTest,
     getSingleTest,
     updateTest,
+    generateTest
 } from "../../controllers/class/testController.js";
 
 import { authorizedUser } from "../../middleWares/accessAuth.js";
@@ -25,5 +26,8 @@ router
     .get(authorizedUser,getSingleTest)
     .put(authorizedUser,updateTest);
 
+router
+  .route("/generate/:id")
+  .get(authorizedUser,generateTest);
 
 export default router;
