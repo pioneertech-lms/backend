@@ -66,6 +66,12 @@ const schema = new mongoose.Schema(
     profileImg: {
       type: String,
     },
+    logoImg: {
+      type: String,
+    },
+    watermarkImg: {
+      type: String,
+    },
     class:{
       type: Schema.Types.ObjectId,
       ref: "class",
