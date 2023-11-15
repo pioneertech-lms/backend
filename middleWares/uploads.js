@@ -6,6 +6,9 @@ const storage = multer.diskStorage({
     if (file.fieldname === "logoImg") {
       cb(null, "./public/uploads/classes/logo");
     }
+    if (file.fieldname === "watermarkImg") {
+      cb(null, "./public/uploads/classes/watermark");
+    }
     if (file.fieldname === "profileImg") {
       cb(null, "./public/uploads/users/profile");
     }
@@ -31,6 +34,9 @@ const storage = multer.diskStorage({
 const upload = multer({ storage }).fields([
   {
     name: "logoImg",
+  },
+  {
+    name: "watermarkImg",
   },
   {
     name: "profileImg",
