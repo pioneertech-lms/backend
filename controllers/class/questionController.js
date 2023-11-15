@@ -144,8 +144,8 @@ export const addSingleQuestion = catchAsyncError(async (req,res,next) => {
         return res.status(200).json({message:"question added successfully"});
       }
     } catch (err) {
-      console.log(err)
-      return res.status(501).json({message:"something went wrong"});
+      let message = err.message || "Something went wrong";
+      return res.status(501).json({message});
       // if (err.code === "DUPLICATE_NUMBER_WARNING") {
       // } else {
       //   console.error(err);

@@ -58,11 +58,7 @@ const schema = new mongoose.Schema(
   }
 );
 
-
-schema.index({ number: 1, creator: 1 }, { unique: true });
-
-// Custom validation method to check for duplicates before saving
-schema.pre("save", async function (next) {
+schema.pre('save', async function (next) {
   try {
     const existingQuestion = await Question.findOne({
       number: this.number,
@@ -71,16 +67,17 @@ schema.pre("save", async function (next) {
     });
 
     if (existingQuestion) {
-      const error = new Error("Duplicate number entered");
-      error.code = "DUPLICATE_NUMBER_WARNING";
-      throw error;
+      const error = new Error('Duplicate question number for the user');
+      error.name = 'ValidationError';
+      next(error);
     }
 
-    next();
+    return next();
   } catch (err) {
-    next(err);
+    return next(err);
   }
 });
+
 export const Question = mongoose.model("question",schema); 
 
 
