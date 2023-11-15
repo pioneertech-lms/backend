@@ -55,4 +55,7 @@ const schema = new mongoose.Schema(
   }
 );
 
+
+schema.index({ number: 1, creator: 1 }, { unique: true });
+
 export const Question = mongoose.model("question",schema); 
