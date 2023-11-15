@@ -1,6 +1,7 @@
 import express from "express";
 import {
-    getAllTests,
+    getAllTeacherTests,
+    getAllStudentTests,
     createTest,
     getSingleTest,
     updateTest,
@@ -12,13 +13,17 @@ const router = express.Router();
 
 router
   .route("/")
-  .get(getAllTests)
+  .get(authorizedUser,getAllTeacherTests)
   .post(authorizedUser,createTest);
 
 router
+  .route("/student")
+  .get(authorizedUser,getAllStudentTests);
+
+router
     .route("/:id")
-    .get(getSingleTest)
-    .put(updateTest);
+    .get(authorizedUser,getSingleTest)
+    .put(authorizedUser,updateTest);
 
 
 export default router;
