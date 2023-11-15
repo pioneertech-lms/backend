@@ -1,11 +1,11 @@
-import { configDotenv } from "dotenv";
 import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
 import {Test} from "../../models/Test.js";
 import { Question } from "../../models/Question.js";
 
-export const getAllTests = catchAsyncError(async (req,res,next) => {
+export const getAllTeacherTests = catchAsyncError(async (req,res,next) => {
     let query = {
         isDeleted: false,
+        creator:req.user._id,
       };
     
       if(req.query.isDeleted=== "true"){
@@ -81,6 +81,87 @@ export const getAllTests = catchAsyncError(async (req,res,next) => {
         search: search ? search : "",
       })
 })
+
+export const getAllStudentTests = catchAsyncError(async (req,res,next) => {
+    let query = { 
+        isDeleted: false,
+        creator: req.user._id,
+    };
+
+    if(req.query.isDeleted=== "true"){
+        query.isActive = false;
+    }
+
+    let limit = parseInt(req.query.perPage) || 10;
+    let page = req.query.page ? req.query.page : 1;
+    let skip = (page - 1) * (req.query.perPage ? req.query.perPage : 10);
+    let sort = req.query.sort ? {} : { createdAt: -1 };
+    let search = req.query.search;
+
+    if (search) {
+        let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+        const regex = new RegExp(newSearchQuery, "gi");
+        query.$or = [
+            {
+                name: regex,
+            },
+            {
+                type: regex,
+            },
+            {
+                subjects: regex,
+            },
+            {
+                duration: regex,
+            },
+            {
+                questions: regex,
+            },
+        ];
+    }
+
+    let aggregateQuery = [
+        {
+            $match: query,
+        },
+        {
+            $sort: sort,
+        },
+        {
+            $facet: {
+                data: [
+                    {
+                        $skip: skip,
+                    },
+                    {
+                        $limit: limit,
+                    },
+                ],
+                metadata: [
+                    {
+                        $match: query,
+                    },
+                    {
+                        $count: "total",
+                    },
+                ],
+            },
+        },
+    ];
+
+    const tests = await Test.aggregate(aggregateQuery);
+
+    res.status(200).json({
+        tests: tests[0].data,
+        total: tests[0].metadata[0]
+            ? Math.ceil(tests[0].metadata[0].total / limit)
+            : 0,
+        page,
+        perPage: limit,
+        search: search ? search : "",
+    })
+})
+
 
 export const  createTest = catchAsyncError(async (req,res,next) => {
     const {
