@@ -84,6 +84,7 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
     slug:slugify(`${firstName} ${lastName}`),
     username,
     password,
+    createdBy:req.user._id,
   };
 
   
