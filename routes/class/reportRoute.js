@@ -15,18 +15,18 @@ const router = express.Router();
 
 router
 .route("/test/:testId")
-    .get(getReportByTest)
-    .post(addReport)
+    .get(authorizedUser,getReportByTest)
+    .post(authorizedUser,addReport)
     // .put(updateReport);
 
 
 // for teacher to get student's report
 router
     .route("/student/:studentId")
-    .get(getReportByStudent)
+    .get(authorizedUser,getReportByStudent)
 
 router
     .route("/:teacherId")
-    .get(getAllReports)
+    .get(authorizedUser,getAllReports)
 
 export default router;

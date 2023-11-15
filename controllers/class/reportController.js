@@ -99,10 +99,10 @@ export const addReport = catchAsyncError(async (req,res,next) => {
       return res.status(404).json({message:"test not found!"});
     }
 
-    if (new Date(currentDT) < startDT) {
+    if (new Date() < testFound.startTime) {
       return res.status(400).json({message:"Test has not yet started."})
     } 
-    if (new Date(currentDT) > endDT) {
+    if (new Date() > testFound.endTime) {
       return res.status(400).json({message:"Test has ended or the time is over. Contact admin for details."});
     }
 
@@ -134,7 +134,7 @@ export const addReport = catchAsyncError(async (req,res,next) => {
     attempted++;
   }
 
-  percentage = (obtainedMarks/total) * 100;
+  let percentage = (obtainedMarks/total) * 100;
 
     let _report = {
       student: req.user._id,

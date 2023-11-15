@@ -4,7 +4,7 @@ import {
   registerUser,
   userChangePassword,
 } from "../../controllers/user/authController.js";
-import { extractUserInfo } from "../../middleWares/accessAuth.js";
+import {authorizedUser, extractUserInfo } from "../../middleWares/accessAuth.js";
 
 const router = express.Router();
 
@@ -14,7 +14,7 @@ router
 
 router
   .route("/register")
-  .post(registerUser)
+  .post(authorizedUser, registerUser)
 
 router
   .route("/change-password")
