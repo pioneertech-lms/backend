@@ -2,6 +2,7 @@ import express from "express";
 import upload from "../../middleWares/uploads.js";
 import {
     getAllReports,
+    getSingleReport,
     addReport,
     getReportByTest,
     updateReport,
@@ -26,7 +27,11 @@ router
     .get(authorizedUser,getReportByStudent)
 
 router
-    .route("/:teacherId")
+    .route("/teacher/:teacherId")
     .get(authorizedUser,getAllReports)
+
+router
+    .route("/:id")
+    .get(authorizedUser, getSingleReport)
 
 export default router;

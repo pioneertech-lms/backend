@@ -396,7 +396,7 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
         console.error('Error handling PDF to DOCX conversion:', error);
       }
 
-      return res.status(200).json({message:"test generated successfully",pdf:process.env.BACKEND_URL + pdfPath.slice(6),doc:process.env.BACKEND_URL + docPath.slice(6)});
+      return res.status(200).json({message:"test generated successfully",pdf:process.env.BACKEND_URL + pdfPath.replace(/(\.\/)?public/, ""),doc:process.env.BACKEND_URL + docPath.replace(/(\.\/)?public/, "")});
   });
 
 

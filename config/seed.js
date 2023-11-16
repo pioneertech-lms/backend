@@ -6,8 +6,13 @@ export const seed = catchAsyncError(async () => {
 
   if (!existingAdminUser) {
     await User.create({
+      firstName: "Super",
+      lastName: "Admin",
+      email: process.env.ADMIN_USERNAME,
+      phone: "0000000000",
       username: process.env.ADMIN_USERNAME,
       password: process.env.ADMIN_PASSWORD,
+      role: "admin"
     });
 
     console.log('Admin user created successfully.');

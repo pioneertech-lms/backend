@@ -2,11 +2,13 @@ import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
 import { Report } from "../../models/Report.js";
 import { Test } from "../../models/Test.js";
 import { Question } from "../../models/Question.js";
+import mongoose from "mongoose";
 
+const ObjectId = mongoose.Types.ObjectId;
 
 export const getAllReports = catchAsyncError(async (req,res,next) => {
     let query = {
-        teacher: req.params.teacherId
+        teacher: new ObjectId(req.params.teacherId)
       };
     
       let limit = parseInt(req.query.perPage) || 10;
@@ -85,6 +87,16 @@ export const getAllReports = catchAsyncError(async (req,res,next) => {
       })
 }) 
 
+export const getSingleReport = catchAsyncError(async (req,res,next) => {
+  const foundReport = await Report.findById(req.params.id);
+
+  if(foundReport){
+      return res.status(200).json(foundReport);
+  } else {
+      return res.status(404).json({message:"test not found!"});
+  }
+})
+
 export const addReport = catchAsyncError(async (req,res,next) => {
     const {
         questions,
@@ -132,8 +144,8 @@ export const addReport = catchAsyncError(async (req,res,next) => {
 
     _report.questions.push({
       questionId,
-      selectedOpt: selectedOption,
-      correctOpt: questionFound.answer,
+      selected: selectedOption,
+      correct: questionFound.answer === selectedOption,
     });
 
     total += questionFound.marks;
@@ -263,15 +275,15 @@ export const updateReport = catchAsyncError(async (req,res,next) => {
 
 export const getReportByStudent = catchAsyncError(async (req,res,next) => {
   let query = {
-    student: req.params.studentId
+    student: new ObjectId(req.params.studentId)
   };
-
+  
   let limit = parseInt(req.query.perPage) || 10;
   let page = req.query.page ? req.query.page : 1;
   let skip = (page - 1) * (req.query.perPage ? req.query.perPage : 10);
   let sort = req.query.sort ? {} : { createdAt: -1 };
   let search = req.query.search;
-
+  
   if (search) {
     let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
     const regex = new RegExp(newSearchQuery, "gi");
@@ -330,6 +342,7 @@ export const getReportByStudent = catchAsyncError(async (req,res,next) => {
   ];
 
   const reports = await Report.aggregate(aggregateQuery);
+
 
   res.status(200).json({
     reports: reports[0].data,

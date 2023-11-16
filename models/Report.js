@@ -37,10 +37,10 @@ const schema = new mongoose.Schema(
       type:Number,
       required:true
     },
-    status:{
-      type:Boolean,
-      required:true,
-    },
+    // status:{
+    //   type:Boolean,
+    //   required:true,
+    // },
     remark:{
       type:String
     },
@@ -52,7 +52,7 @@ const schema = new mongoose.Schema(
           required:true,
         },
         selected:{
-          type:String,
+          type:Number,
           required:true,
         },
         correct:{

@@ -43,6 +43,7 @@ export const loginUser = catchAsyncError(async (req, res, next) => {
 // register
 export const registerUser = catchAsyncError(async (req, res, next) => {
  const {
+    createdBy,
     firstName,
     lastName,
     email,
@@ -61,6 +62,8 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
     exams,
     subjects,
   } = req.body;
+  console.log(req.body, req.files);
+
 
   if (password !== confirmPassword) {
     return next(
@@ -83,7 +86,7 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
     lastName,
     username,
     password,
-    createdBy:req.user._id,
+    createdBy: createdBy || req.user._id,
   };
 
   
@@ -109,10 +112,10 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
     _user.description = description;
   }
   if(subjects){
-    _user.subjects = subjects;
+    _user.subjects = Array.isArray(subjects) ? subjects: [subjects];
   }
   if(exams){
-    _user.exams = exams;
+    _user.exams = Array.isArray(exams) ? exams: [exams];
   }
   if(req.files['profileImg']){
     _user.profileImg = process.env.BACKEND_URL + (req.files.profileImg[0].path).slice(6);
@@ -244,10 +247,10 @@ export const updateUserInfo = catchAsyncError(async (req, res, next) => {
     user.description = description;
   }
   if(subjects){
-    user.subjects = subjects;
+    user.subjects = Array.isArray(subjects) ? subjects: [subjects];
   }
   if(exams){
-    user.exams = exams;
+    user.exams = Array.isArray(exams) ? exams: [exams];
   }
   if(password){
     user.password = password;
