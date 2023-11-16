@@ -43,7 +43,24 @@ const schema = new mongoose.Schema(
     },
     remark:{
       type:String
-    }
+    },
+    questions:[
+      {
+        questionId:{
+          type:Schema.Types.ObjectId,
+          ref:"question",
+          required:true,
+        },
+        selected:{
+          type:String,
+          required:true,
+        },
+        correct:{
+          type:Boolean,
+          required:true,
+        },
+      }
+    ],
   },
   {
     timestamps: true,
