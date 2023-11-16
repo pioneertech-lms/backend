@@ -113,6 +113,13 @@ export const addReport = catchAsyncError(async (req,res,next) => {
   let attempted=0;
   let incorrect=0;
 
+  let _report = {
+    student: req.user._id,
+    teacher: testFound.creator,
+    test:testId,
+    questions:[],
+  }
+
   for (const q of questions) {
     const questionId = q.questionId;
     const selectedOption = q.selected;
@@ -122,6 +129,14 @@ export const addReport = catchAsyncError(async (req,res,next) => {
     if (!questionFound) {
       return res.status(404).json({ message: "Question not found!" });
     }
+
+    _report.questions.push({
+      questionId,
+      selectedOpt: selectedOption,
+      correctOpt: questionFound.answer,
+    });
+
+    total += questionFound.marks;
 
      if (questionFound.answer === selectedOption) {
       obtainedMarks += questionFound.marks;
@@ -136,10 +151,8 @@ export const addReport = catchAsyncError(async (req,res,next) => {
 
   let percentage = (obtainedMarks/total) * 100;
 
-    let _report = {
-      student: req.user._id,
-      teacher: testFound.creator,
-      test:testId,
+    _report = {
+      ..._report,
       obtainedMarks,
       total,
       incorrect,
