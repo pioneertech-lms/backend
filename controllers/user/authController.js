@@ -81,7 +81,6 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
   let _user = {
     firstName,
     lastName,
-    slug:slugify(`${firstName} ${lastName}`),
     username,
     password,
     createdBy:req.user._id,
@@ -175,3 +174,99 @@ export const userChangePassword = catchAsyncError(async (req, res, next) => {
   // res.redirect("/api/user/profile");
 });
 
+export const updateUserInfo = catchAsyncError(async (req, res, next) => {
+  const {
+    firstName,
+    lastName,
+    email,
+    phone,
+    username,
+    password,
+    role,
+    address,
+    city,
+    state,
+    pincode,
+    dob,
+    gender,
+    description,
+    exams,
+    subjects,
+  } = req.body;
+
+  let user = await User.findById(req.params.id);
+
+  if (!user) {
+    return res.status(404).json({message:"User not found"});
+  }
+
+  // if(req.user.role === "student" && req.user._id != req.params.id){
+  //   return res.status(403).json({message:"You are not authorized to update this user"});
+  // }
+
+  if(firstName){
+    user.firstName = firstName;
+  }
+  if(lastName){
+    user.lastName = lastName;
+  }
+  if(username){
+    user.username = username;
+  }
+  if(email){
+    user.email = email;
+  }
+  if(phone){
+    user.phone = phone;
+  }
+  if(dob){
+    user.dob = dob;
+  }
+  if(role){
+    user.role = role;
+  }
+  if(address){
+    user.address = address;
+  }
+  if(city){
+    user.city = city;
+  }
+  if(state){
+    user.state = state;
+  }
+  if(pincode){
+    user.pincode = pincode;
+  }
+  if(gender){
+    user.gender = gender;
+  }
+  if(description){
+    user.description = description;
+  }
+  if(subjects){
+    user.subjects = subjects;
+  }
+  if(exams){
+    user.exams = exams;
+  }
+  if(password){
+    user.password = password;
+  }
+  if(req.files['profileImg']){
+    user.profileImg = process.env.BACKEND_URL + (req.files.profileImg[0].path).slice(6);
+  }
+  if(req.files['logoImg']){
+    user.logoImg = process.env.BACKEND_URL + (req.files.logoImg[0].path).slice(6);
+  }
+  if(req.files['watermarkImg']){
+    user.watermarkImg = process.env.BACKEND_URL + (req.files.watermarkImg[0].path).slice(6);
+  }
+
+  try {
+    await user.save();
+    res.status(200).json({message:"User updated successfully"});
+  } catch (error) {
+    res.status(500).json({message:"Something went wrong"});
+  }
+
+});
