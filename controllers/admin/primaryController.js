@@ -1,6 +1,7 @@
 import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
 import { Class } from "../../models/Class.js";
 import { User } from "../../models/User.js";
+import { Question } from "../../models/Question.js";
 
 export const deleteUser = catchAsyncError(async (req, res, next) => {
     const {id} = req.params;
@@ -502,4 +503,12 @@ export const deleteClass = catchAsyncError(async (req,res,next) => {
   }else{
     return res.status(404).json({message:"Class not found!"});
   }
+})
+
+export const getStats = catchAsyncError(async (req, res, next) => {
+  const teachers = await User.count({role: "teacher"});
+  const students = await User.count({role: "student"});
+  const questions = await Question.count();
+
+  return res.status(200).json({teachers, students, questions});
 })
