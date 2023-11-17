@@ -87,8 +87,7 @@ export const getAllTeacherTests = catchAsyncError(async (req,res,next) => {
 
 export const getAllStudentTests = catchAsyncError(async (req,res,next) => {
     let query = { 
-        isDeleted: false,
-        creator: req.user._id,
+        creator: req.user.createdBy ?? req.user._id,
     };
 
     if(req.query.isDeleted=== "true"){
