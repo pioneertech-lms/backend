@@ -1,13 +1,6 @@
 import multer from "multer";
 import path from "path";
-import fs from "fs";
-
-const ensureDirExists = (filePath) => {
-  if (fs.existsSync(filePath)) {
-    return true;
-  }
-  fs.mkdirSync(filePath, { recursive: true });
-};
+import {ensureDirExists} from "../utils/files.js";
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

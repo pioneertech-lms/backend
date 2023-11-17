@@ -1,6 +1,7 @@
 import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
 import {Test} from "../../models/Test.js";
 import { Question } from "../../models/Question.js";
+import {ensureDirExists} from "../../utils/files.js";
 import libre from 'libreoffice-convert';
 import fs from 'fs';
 import path from 'path';
@@ -370,6 +371,7 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
           });
       }, testFound,questions);
   
+      ensureDirExists("./public/generated");
       let pdfPath = `./public/generated/questionPaperPdf-${Date.now() +Math.floor(Math.random() * 90000)}.pdf`
       let docPath = `./public/generated/questionPaperDoc-${Date.now() +Math.floor(Math.random() * 90000)}.docx`
       // Generate PDF with watermark
