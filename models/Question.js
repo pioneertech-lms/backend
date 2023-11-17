@@ -39,6 +39,10 @@ const schema = new mongoose.Schema(
         type:String,
         enum:["cet","jee","neet"]
     },
+    subject:{
+        type: String,
+        enum: ["physics","chemistry","mathematics","biology"]
+    },
     creator:{
         type: Schema.Types.ObjectId,
         ref: "user",

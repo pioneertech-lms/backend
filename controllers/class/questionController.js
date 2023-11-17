@@ -16,7 +16,7 @@ export const getAllQuestions = catchAsyncError(async (req,res,next) => {
       let limit = parseInt(req.query.perPage) || 10;
       let page = parseInt(req.query.page, 10) || 1;
       let skip = (page - 1) * limit;
-      let sort = req.query.sort ? {} : { createdAt: -1 };
+      let sort = req.query.sort ? {} : { number: -1 };
       let search = req.query.search;
     
       if (search) {
@@ -95,6 +95,7 @@ export const addSingleQuestion = catchAsyncError(async (req,res,next) => {
         topic,
         yearOfAppearance,
         exam,
+        subject
     } = req.body;
 
     
@@ -127,6 +128,9 @@ export const addSingleQuestion = catchAsyncError(async (req,res,next) => {
     }
     if(exam){
         _question.exam = exam
+    }
+    if(subject){
+        _question.subject = subject
     }
     
     _question.isCommon= isCommon && isCommon === "true" ? true : false; 
@@ -178,6 +182,7 @@ export const updateQuestion = catchAsyncError(async (req,res,next) => {
         topic,
         yearOfAppearance,
         exam,
+        subject,
         isDeleted,
     } = req.body;
 
@@ -211,6 +216,9 @@ export const updateQuestion = catchAsyncError(async (req,res,next) => {
     }
     if(exam){
         questionFound.exam = exam;
+    }
+    if(subject){
+        questionFound.subject = subject;
     }
     if(isDeleted=="false"){
         questionFound.isDeleted = false;
@@ -285,6 +293,7 @@ worksheet.eachRow(async (row, rowNumber) => {
   _question.yearOfAppearance = row.getCell(16).value || null; // Column 16: yearOfAppearance
   _question.exam = row.getCell(17).value || null; // Column 17: exam
   _question.marks = row.getCell(18).value || null; // Column 18: marks
+  _question.subject = row.getCell(19).value || null; // Column 18: subject
   _question.creator = req.user._id;
 
   const images = worksheet.getImages();
