@@ -61,6 +61,7 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
     description,
     exams,
     subjects,
+    className,
   } = req.body;
   console.log(req.body, req.files);
 
@@ -110,6 +111,9 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
   }
   if(description){
     _user.description = description;
+  }
+  if(className){
+    _user.className = className;
   }
   if(subjects){
     _user.subjects = Array.isArray(subjects) ? subjects: [subjects];
@@ -195,6 +199,7 @@ export const updateUserInfo = catchAsyncError(async (req, res, next) => {
     description,
     exams,
     subjects,
+    className,
   } = req.body;
 
   let user = await User.findById(req.params.id);
@@ -245,6 +250,9 @@ export const updateUserInfo = catchAsyncError(async (req, res, next) => {
   }
   if(description){
     user.description = description;
+  }
+  if(className){
+    user.className = className;
   }
   if(subjects){
     user.subjects = Array.isArray(subjects) ? subjects: [subjects];

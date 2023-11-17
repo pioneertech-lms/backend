@@ -10,6 +10,7 @@ import {
     getSingleClass,
     updateClass,
     deleteClass,
+    getStats
 } from "../../controllers/admin/primaryController.js";
 import { checkUserModuleAccess, authorizedUser, extractUserInfo } from "../../middleWares/accessAuth.js";
 import { registerUser } from "../../controllers/user/authController.js";
@@ -45,5 +46,6 @@ router
   .put(authorizedUser,checkUserModuleAccess(),updateClass)
   .delete(authorizedUser,checkUserModuleAccess(),deleteClass);
 
+router.route("/stats").get(authorizedUser, getStats);
 
 export default router;

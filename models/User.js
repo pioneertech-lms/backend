@@ -72,6 +72,9 @@ const schema = new mongoose.Schema(
     watermarkImg: {
       type: String,
     },
+    className: {
+      type: String,
+    },
     class:{
       type: Schema.Types.ObjectId,
       ref: "class",
