@@ -211,33 +211,44 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
       if(!questions || !total){
         return res.status(500).json({message:"pass questions and total!"});
       }
-      
-      for(let {topic, noOfQue} of questions){
-        console.log(topic, noOfQue);
-        let query = {
-          isDeleted:false,
-          creator: req.user._id,
-          topic: topic,
-        }
-        let aggregateQuery = [
-          {
-            $match: query,
-          },
-          {
-            $sample: { size: noOfQue }
-          },
-          {
-            $project: {
-              _id: 1,
-            },
-          },
-        ];
 
-        const result = (await Question.aggregate(aggregateQuery))
-          .map(item => item._id);
-          
-        _test.questions = result;
-      }
+      // get last 5 random tests 
+      const previousTests = await Test.find({ creator: req.user._id, type: 'random' })
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .select('questions -_id')
+        .populate('questions');
+      let usedQuestionIds = new Set();
+      previousTests.forEach(test => {
+          test.questions.forEach(question => {
+              usedQuestionIds.add(question._id.toString());
+          });
+      });
+
+      _test.questions = [];
+      for (let { topic, noOfQue } of questions) {
+        let uniqueQuestions = await Question.find({
+            isDeleted: false,
+            creator: req.user._id,
+            topic: topic,
+            _id: { $nin: Array.from(usedQuestionIds) }
+        }).select('_id').limit(noOfQue);
+
+        if (uniqueQuestions.length < noOfQue) {
+            let deficit = noOfQue - uniqueQuestions.length;
+            let additionalQuestions = await Question.find({
+                isDeleted: false,
+                creator: req.user._id,
+                topic: topic,
+                _id: { $nin: Array.from(uniqueQuestions.map(q => q._id)) }
+            }).select('_id').limit(deficit);
+
+            uniqueQuestions = uniqueQuestions.concat(additionalQuestions);
+        }
+
+        _test.questions.push(...uniqueQuestions.map(q => q._id));
+    }
+
     }
     if(_test.type === "manual"){
         _test.questions = questions;
