@@ -15,7 +15,7 @@ import morgan from "morgan";
 import expressSanitizer from "express-sanitizer";
 import { config } from "dotenv";
 
-config({ path: "./config/config.env", debug: true });
+config({ path: "./config/config.env" });
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);

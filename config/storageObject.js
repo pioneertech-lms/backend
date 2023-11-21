@@ -1,5 +1,7 @@
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import path from 'path';
+import { config } from 'dotenv';
+config({ path: "./config/config.env"});
 
 export const s3 = new S3Client({
   endpoint: process.env.S3_ENDPOINT,
