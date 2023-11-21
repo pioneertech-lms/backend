@@ -90,7 +90,7 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
     createdBy: createdBy || req.user._id,
   };
 
-  
+
   if(role){
     _user.role = role;
   }
@@ -122,15 +122,15 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
     _user.exams = Array.isArray(exams) ? exams: [exams];
   }
   if(req.files['profileImg']){
-    _user.profileImg = process.env.BACKEND_URL + (req.files.profileImg[0].path).slice(6);
+    _user.profileImg = new URL(req.files.profileImg[0].key, process.env.BACKEND_URL).toString();
   }
   if(req.files['logoImg']){
-    _user.logoImg = process.env.BACKEND_URL + (req.files.logoImg[0].path).slice(6);
+    _user.logoImg = new URL(req.files.logoImg[0].key, process.env.BACKEND_URL).toString();
   }
   if(req.files['watermarkImg']){
-    _user.watermarkImg = process.env.BACKEND_URL + (req.files.watermarkImg[0].path).slice(6);
+    _user.watermarkImg = new URL(req.files.watermarkImg[0].key, process.env.BACKEND_URL).toString();
   }
-  
+
 
   if(address || city || state || pincode){
     let _location = {};
@@ -264,17 +264,14 @@ export const updateUserInfo = catchAsyncError(async (req, res, next) => {
     user.password = password;
   }
   if(req.files['profileImg']){
-    user.profileImg = process.env.BACKEND_URL + (req.files.profileImg[0].path).slice(6);
+    user.profileImg = new URL(req.files.profileImg[0].key, process.env.BACKEND_URL).toString();
   }
   if(req.files['logoImg']){
-    console.log(req.files['logoImg'])
-    console.log(req.middlewareData, "MIDDLEWARE DATA");
-    // console.log("SLICED PATH",(req.files.logoImg[0].path).slice(6))
-    // user.logoImg = process.env.BACKEND_URL + (req.files.logoImg[0].path).slice(6);
+    user.logoImg = new URL(req.files.logoImg[0].key, process.env.BACKEND_URL).toString();
   }
-  // if(req.files['watermarkImg']){
-  //   user.watermarkImg = process.env.BACKEND_URL + (req.files.watermarkImg[0].path).slice(6);
-  // }
+  if(req.files['watermarkImg']){
+    user.watermarkImg = new URL(req.files.watermarkImg[0].key, process.env.BACKEND_URL).toString();
+  }
 
   try {
     await user.save();

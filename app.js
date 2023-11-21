@@ -1,5 +1,4 @@
 import express from "express";
-import { config } from "dotenv";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import bodyParser from "body-parser";
@@ -14,8 +13,10 @@ import MongoStore from "connect-mongo";
 import passport from "passport";
 import morgan from "morgan";
 import expressSanitizer from "express-sanitizer";
+import { config } from "dotenv";
 
-config({ path: "./config/config.env" });
+config({ path: "./config/config.env", debug: true });
+
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

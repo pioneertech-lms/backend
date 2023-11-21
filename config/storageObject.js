@@ -1,15 +1,17 @@
-import pkg from 'aws-sdk';
-const {S3} = pkg;
-import path  from'path';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import path from 'path';
 
-const s3 = new S3({
-  endpoint: 'http://localhost:9000', // MinIO server endpoint
-  s3ForcePathStyle: true, // Required for MinIO
-  accessKeyId: 'tFfzOrh9c8i9a4GzBBbO',
-  secretAccessKey: 'a7ry1MfYtz9fspXxketwTFvfWetonJ1SNiiB1oKZ',
+export const s3 = new S3Client({
+  endpoint: process.env.S3_ENDPOINT,
+  s3ForcePathStyle: true,
+  credentials: {
+    accessKeyId: process.env.S3_ACCESS_KEY_ID,
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+  },
+  region: process.env.S3_REGION,
 });
 
-const bucketName = 'storage-bucket';
+export const bucketName = 'assets';
 
 // const createBucketIfNotExists = async () => {
 //   try {
@@ -25,7 +27,7 @@ const bucketName = 'storage-bucket';
 // };
 
 export const uploadFile = async (file) => {
-  const objectName = `assets/${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`;
+  const objectName = `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`;
 
   await s3.upload({
     Bucket: bucketName,
@@ -36,20 +38,19 @@ export const uploadFile = async (file) => {
   return { objectName };
 };
 
-export const getFileStream = (req, res, next) => {
-  const params = {
-    Key: 'assets/'+req.params.objectId,
+export const getFileStream = async (req, res, next) => {
+  const command = new GetObjectCommand({
+    Key: 'assets/' + req.params.objectId,
     Bucket: bucketName,
-  };
-
-  const s3Stream = s3.getObject(params).createReadStream();
-
-  s3Stream.on('error', (err) => {
-    console.error(err);
-    res.status(500).send('Not Found');
   });
-
-  s3Stream.pipe(res);
+  try {
+    const object = await s3.send(command);
+    res.type(req.params.objectId.split('.').pop() ?? "application/octet-stream");
+    return object.Body.pipe(res);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send('Not Found');
+  }
 };
 
 // (async () => {
