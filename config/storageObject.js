@@ -9,7 +9,7 @@ const s3 = new S3({
   secretAccessKey: 'a7ry1MfYtz9fspXxketwTFvfWetonJ1SNiiB1oKZ',
 });
 
-const bucketName = 'assets';
+const bucketName = 'storage-bucket';
 
 // const createBucketIfNotExists = async () => {
 //   try {
