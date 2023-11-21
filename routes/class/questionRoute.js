@@ -1,5 +1,5 @@
 import express from "express";
-import upload from "../../middleWares/uploads.js";
+import {upload} from "../../middleWares/uploads.js";
 import {
     getAllQuestions,
     addSingleQuestion,

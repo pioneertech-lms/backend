@@ -6,7 +6,7 @@ import {
   userChangePassword,
 } from "../../controllers/user/authController.js";
 import {authorizedUser, extractUserInfo } from "../../middleWares/accessAuth.js";
-import uploads from "../../middleWares/uploads.js";
+import {upload} from "../../middleWares/uploads.js";
 
 const router = express.Router();
 
@@ -16,7 +16,7 @@ router
 
 router
   .route("/register")
-  .post(authorizedUser,uploads, registerUser)
+  .post(authorizedUser,upload, registerUser)
 
 router
   .route("/change-password")
@@ -24,6 +24,6 @@ router
 
 router
   .route("/update/:id")
-  .put(authorizedUser,uploads,updateUserInfo)
+  .put(authorizedUser,upload,updateUserInfo)
   
 export default router;

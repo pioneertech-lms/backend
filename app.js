@@ -85,6 +85,9 @@ app.use(function (req, res, next) {
 import {seed} from "./config/seed.js";
 seed();
 
+// storage middleware
+app.get("/assets/:objectId",getFileStream);
+
 // User route imports
 import userAuthRoutes from "./routes/user/authRoute.js";
 app.use("/api/user/auth", userAuthRoutes);
@@ -111,6 +114,7 @@ app.use("/api/report/",reportRoute);
 
 // test routes
 import testRoute from './routes/class/testRoute.js';
+import { getFileStream } from "./config/storageObject.js";
 app.use("/api/test/",testRoute);
 
 // // Teacher route imports

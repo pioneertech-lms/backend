@@ -267,11 +267,14 @@ export const updateUserInfo = catchAsyncError(async (req, res, next) => {
     user.profileImg = process.env.BACKEND_URL + (req.files.profileImg[0].path).slice(6);
   }
   if(req.files['logoImg']){
-    user.logoImg = process.env.BACKEND_URL + (req.files.logoImg[0].path).slice(6);
+    console.log(req.files['logoImg'])
+    console.log(req.middlewareData, "MIDDLEWARE DATA");
+    // console.log("SLICED PATH",(req.files.logoImg[0].path).slice(6))
+    // user.logoImg = process.env.BACKEND_URL + (req.files.logoImg[0].path).slice(6);
   }
-  if(req.files['watermarkImg']){
-    user.watermarkImg = process.env.BACKEND_URL + (req.files.watermarkImg[0].path).slice(6);
-  }
+  // if(req.files['watermarkImg']){
+  //   user.watermarkImg = process.env.BACKEND_URL + (req.files.watermarkImg[0].path).slice(6);
+  // }
 
   try {
     await user.save();

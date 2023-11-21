@@ -1,7 +1,16 @@
 import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
+import { uploadFile } from "../../config/storageObject.js"; // Adjust the path accordingly
 
-export const uploadStatic = catchAsyncError(async (req,res,next) => {
+export const uploadStatic = catchAsyncError(async (req, res, next) => {
+  const files = req.files;
+  const uploadedFiles = [];
 
-    const staticFile = process.env.BACKEND_URL + (req.files.questionImg[0].path).slice(6);
-    return res.status(200).json({asset: staticFile});
-})
+  for (const fieldName in files) {
+    const file = files[fieldName][0];
+
+    const s3Url = await uploadFile(file);
+    uploadedFiles.push(s3Url);
+  }
+
+  return res.status(200).json({ assets: uploadedFiles });
+});
