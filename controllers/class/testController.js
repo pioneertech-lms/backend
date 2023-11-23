@@ -2,9 +2,12 @@ import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
 import {Test} from "../../models/Test.js";
 import { Question } from "../../models/Question.js";
 import {ensureDirExists} from "../../utils/files.js";
+import axios from 'axios';
 import libre from 'libreoffice-convert';
 import fs from 'fs';
 import path from 'path';
+import { PDFDocument } from 'pdf-lib';
+import { Document, Packer, Paragraph, TextRun } from 'docx';
 
 export const getAllTeacherTests = catchAsyncError(async (req,res,next) => {
     let query = {
@@ -326,6 +329,7 @@ export const  updateTest = catchAsyncError(async (req,res,next) => {
 });
 
 import puppeteer from 'puppeteer'
+import { uploadFile } from "../../config/storageObject.js";
 
 export const generateTest = catchAsyncError(async (req,res,next) => {
     const {id} = req.params;
@@ -341,7 +345,7 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
 
     // generate pdf
     const questions = testFound.questions;
-       const browser = await puppeteer.launch({ headless: false});
+       const browser = await puppeteer.launch({ headless: true});
       const page = await browser.newPage();
   
       await page.goto(process.env.BACKEND_URL +'/templates/test_template.html');
@@ -359,13 +363,13 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
           const subjects = document.getElementById('subjects');
           subjects.innerHTML = testFound.subjects.join(', ');
         }
-        if(testFound.creator.logo){
+        if(testFound?.creator?.logo){
           const logo = document.getElementById('logo');
-          logo.setAttribute('src', testFound.creator.logo)
+          logo.setAttribute('src', testFound?.creator?.logo)
         }
-        if(testFound.creator.watermark){
+        if(testFound?.creator?.watermark){
           const watermark = document.getElementById('watermark');
-          watermark.setAttribute('src', testFound.creator.watermark)
+          watermark.setAttribute('src', testFound.creator?.watermark)
         }
         const questionsContainer = document.getElementById('questions-container');
           questions.forEach((question,i) => {
@@ -382,33 +386,51 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
       }, testFound,questions);
   
       ensureDirExists("./public/generated");
-      let pdfPath = `./public/generated/questionPaperPdf-${Date.now() +Math.floor(Math.random() * 90000)}.pdf`
-      let docPath = `./public/generated/questionPaperDoc-${Date.now() +Math.floor(Math.random() * 90000)}.docx`
-      // Generate PDF with watermark
-      await page.pdf({ path: pdfPath, format: 'A4', printBackground: true });
-      
-      await browser.close();
+      let pdfPath;
+      let docPath;
 
-      // converting to docx
       try {
-        const tempDir = path.dirname(pdfPath);
-        fs.mkdirSync(tempDir, { recursive: true });
-    
-        const input = fs.readFileSync(pdfPath);
-    
-        libre.convert(input, '.docx', undefined, (err, result) => {
-          if (err) {
-            console.error(`Error converting PDF to DOCX: ${err}`);
-          } else {
-            fs.writeFileSync(docPath, result);
-            console.log('Conversion successful');
-          }
-        });
-      } catch (error) {
-        console.error('Error handling PDF to DOCX conversion:', error);
-      }
+        // Generate PDF with watermark
+        const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
+      
+        //  converting to docx
+        
 
-      return res.status(200).json({message:"test generated successfully",pdf:process.env.BACKEND_URL + pdfPath.replace(/(\.\/)?public/, ""),doc:process.env.BACKEND_URL + docPath.replace(/(\.\/)?public/, "")});
+        // Upload the files to S3
+        const formData = new FormData();
+        formData.append('testPaper', new Blob([pdfBuffer]), 'questionPaper.pdf');
+        // formData.append('testPaper', new Blob([wordBuffer]), 'questionPaper.docx');
+      
+        const response = await axios.post(`${process.env.BACKEND_URL}/api/utils/uploads`, formData);
+        
+        // console.log('File uploaded successfully:', response.data.assets[0]);
+        pdfPath = response.data.assets[0];
+        // docPath = response.data.assets[1];
+      } catch (error) {
+        console.error('Error in the main code block:', error.message);
+      } finally {
+        await browser.close();
+        return res.status(200).json({message:"test generated successfully",pdf:pdfPath,doc:docPath});
+      }
+      // converting to docx
+      // try {
+      //   const tempDir = path.dirname(pdfPath);
+      //   fs.mkdirSync(tempDir, { recursive: true });
+    
+      //   const input = fs.readFileSync(pdfPath);
+    
+      //   libre.convert(input, '.docx', undefined, (err, result) => {
+      //     if (err) {
+      //       console.error(`Error converting PDF to DOCX: ${err}`);
+      //     } else {
+      //       fs.writeFileSync(docPath, result);
+      //       console.log('Conversion successful');
+      //     }
+      //   });
+      // } catch (error) {
+      //   console.error('Error handling PDF to DOCX conversion:', error);
+      // }
+
   });
 
 
