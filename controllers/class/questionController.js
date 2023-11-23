@@ -1,5 +1,6 @@
 import { catchAsyncError } from "../../middleWares/catchAsyncError.js"; 
 import { Question } from "../../models/Question.js";
+import axios from 'axios';
 
 import ExcelJS from "exceljs";
 import { readFileSync } from "fs";
@@ -254,10 +255,15 @@ export const deleteSingleQuestion = catchAsyncError(async (req,res,next) => {
 })
 
 export const addMultipleQuestions = catchAsyncError(async (req,res,next) => {
+
+  const url =process.env.BACKEND_URL +'/'+ req.files.questionSet[0].key;
+  const response = await axios.get(url, { responseType: 'arraybuffer' });
   
-const buffer = readFileSync(`./public${(req.files.questionSet[0].path).slice(6)}`);
+  // Get the buffer containing the file data
+  const fileBuffer = Buffer.from(response.data, 'binary');
+
 const workbook = new ExcelJS.Workbook();
-await workbook.xlsx.load(buffer);
+await workbook.xlsx.load(fileBuffer);
 
 const worksheet = workbook.worksheets[0];
 
@@ -297,11 +303,23 @@ worksheet.eachRow(async (row, rowNumber) => {
   _question.creator = req.user._id;
 
   const images = worksheet.getImages();
-  images.forEach((img) => {
+  images.forEach(async (img) => {
     const imgRow = img.range.tl.row;
     const imageBuf = workbook.getImage(img.imageId);
+
+    // Upload the files to S3
+    const formData = new FormData();
+    formData.append('questionImg', new Blob([imageBuf.buffer]), 'questionImg.jpg');
+  
+    const response = await axios.post(`${process.env.BACKEND_URL}/api/utils/uploads`, formData);
+    // console.log('File uploaded successfully:', response.data.assets[0]);
+    
+    let imgPath = response.data.assets[0];
+    console.log(imgPath)
+
     if (imgRow === rowNumber - 1) {
-      const dataUrl = `<img src='data:image/${imageBuf.extension};base64,${imageBuf.buffer.toString('base64')}'></img> `;
+      const dataUrl = `<img src='${imgPath}'></img> `;
+      // const dataUrl = `<img src='data:image/${imageBuf.extension};base64,${imageBuf.buffer.toString('base64')}'></img> `;
 
       switch (Math.round(img.range.tl.col)) {
         case 2: // questionImage
