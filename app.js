@@ -31,6 +31,10 @@ const __dirname = path.dirname(__filename);
 app.use(cors());
 app.use(cookieParser());
 // app.use(flash());
+
+// storage middleware
+app.get("/assets/:objectId",getFileStream);
+
 app.use(
   session({
     saveUninitialized: false,
@@ -85,9 +89,6 @@ app.use(function (req, res, next) {
 // seed script
 import {seed} from "./config/seed.js";
 seed();
-
-// storage middleware
-app.get("/assets/:objectId",getFileStream);
 
 // User route imports
 import userAuthRoutes from "./routes/user/authRoute.js";
