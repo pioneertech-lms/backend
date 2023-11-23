@@ -5,11 +5,9 @@ export const uploadStatic = catchAsyncError(async (req, res, next) => {
   const files = req.files;
   const uploadedFiles = [];
 
-  for (const fieldName in files) {
-    const file = files[fieldName][0];
-
-    const s3Url = await uploadFile(file);
-    uploadedFiles.push(s3Url);
+  for (const file in files) {
+    const url = process.env.BACKEND_URL + "/" + files[file][0].key;
+    uploadedFiles.push(url);
   }
 
   return res.status(200).json({ assets: uploadedFiles });
