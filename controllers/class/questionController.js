@@ -315,7 +315,7 @@ worksheet.eachRow(async (row, rowNumber) => {
     // console.log('File uploaded successfully:', response.data.assets[0]);
     
     let imgPath = response.data.assets[0];
-    console.log(imgPath)
+    // console.log(imgPath)
 
     if (imgRow === rowNumber - 1) {
       const dataUrl = `<img src='${imgPath}'></img> `;
