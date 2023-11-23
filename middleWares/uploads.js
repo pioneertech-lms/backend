@@ -19,4 +19,5 @@ export const upload = multer({
   { name: 'profileImg' },
   { name: 'questionImg' },
   { name: 'questionSet' },
+  { name: 'testPaper' },
 ]);
