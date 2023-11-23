@@ -1,4 +1,4 @@
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import path from 'path';
 import { config } from 'dotenv';
 config({ path: "./config/config.env"});
@@ -30,19 +30,19 @@ export const bucketName = 'assets';
 
 export const uploadFile = async (file) => {
   const objectName = `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`;
-
-  await s3.upload({
+  const command = new PutObjectCommand({
     Bucket: bucketName,
     Key: objectName,
-    Body: file.buffer,
-  }).promise();
+    Body: file.buffer
+  });
+  await s3.send(command).catch(_ => res.status(500).send("Error uploading file"));
 
   return { objectName };
 };
 
 export const getFileStream = async (req, res, next) => {
   const command = new GetObjectCommand({
-    Key: 'assets/' + req.params.objectId,
+    Key: req.params.objectId,
     Bucket: bucketName,
   });
   try {
