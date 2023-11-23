@@ -63,7 +63,6 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
     subjects,
     className,
   } = req.body;
-  console.log(req.body, req.files);
 
 
   if (password !== confirmPassword) {
