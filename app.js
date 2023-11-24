@@ -63,8 +63,8 @@ let accessLogStream = rfs.createStream("access.log", {
 });
 
 app.set("view engine", "ejs");
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use("/api", express.json());
+app.use("/api", express.urlencoded({ extended: true }));
 app.use(express.static(__dirname + "/public"));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 app.use(methodOverride("_method"));
@@ -128,26 +128,21 @@ app.use("/api/test/",testRoute);
 // app.use("/api/student",studentRoutes);
 
 // test route
-app.get("/ping", (req,res)=>{
+app.get("/status", (req,res)=>{
   // res.render("test");
   res.status(200).send("Server is up & running...")
 })
 
-// fallback route
-app.get("*", (req, res) => {
-  const responseType = req.accepts(["html", "json"]);
+import { createRequestHandler } from "@remix-run/express";
 
-  if (responseType === "html") {
-    console.log(req.url, ": not found request"); //TODO:remove this console
-    res.render(__dirname + "/views/common/page-not-found");
-  } else if (responseType === "json") {
-    res.status(500).json({
-      success: false,
-      message: "The resource you are trying to get is not available.",
-    });
-  }
-});
-
-export default app;
+app.use("/build", express.static("../frontend/public/build", { immutable: true, maxAge: "1y" }));
+app.use("/", express.static("../frontend/public", { maxAge: "1h" }));
+app.all(
+  "*",
+  createRequestHandler({
+    build: await import("../frontend/build/index.js"),
+  })
+);
 
 app.use(ErrorMiddleware);
+export default app;

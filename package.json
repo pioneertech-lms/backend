@@ -28,6 +28,7 @@
     "@aws-sdk/util-create-request": "^3.451.0",
     "aws-sdk": "^2.1500.0",
     "axios": "^1.6.2",
+    "@remix-run/express": "^2.3.0",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
     "connect-mongo": "^5.0.0",
