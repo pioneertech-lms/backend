@@ -1,19 +1,20 @@
-import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
-import path from 'path';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { config } from 'dotenv';
-config({ path: "./config/config.env"});
+config({ path: "./config/config.env" });
 
-export const s3 = new S3Client({
-  endpoint: process.env.S3_ENDPOINT,
+const s3Config = {
   s3ForcePathStyle: true,
   credentials: {
     accessKeyId: process.env.S3_ACCESS_KEY_ID,
     secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
   },
   region: process.env.S3_REGION,
-});
+};
+if (process.env.NODE_ENV !== "production" && process.env.S3_ENDPOINT) s3Config.endpoint = process.env.S3_ENDPOINT;
 
-export const bucketName = 'assets';
+export const s3 = new S3Client(s3Config);
+
+export const bucketName = 'codo-lms-data';
 
 // const createBucketIfNotExists = async () => {
 //   try {
@@ -27,18 +28,6 @@ export const bucketName = 'assets';
 //     }
 //   }
 // };
-
-export const uploadFile = async (file) => {
-  const objectName = `${file.fieldname}-${Date.now()}${path.extname(file.originalname)}`;
-  const command = new PutObjectCommand({
-    Bucket: bucketName,
-    Key: objectName,
-    Body: file.buffer
-  });
-  await s3.send(command).catch(_ => res.status(500).send("Error uploading file"));
-
-  return { objectName };
-};
 
 export const getFileStream = async (req, res, next) => {
   const command = new GetObjectCommand({

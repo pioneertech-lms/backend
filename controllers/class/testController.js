@@ -13,17 +13,17 @@ export const getAllTeacherTests = catchAsyncError(async (req,res,next) => {
     let query = {
         creator:req.user._id,
       };
-    
+
       if(req.query.isDeleted=== "true"){
         query.isActive = true;
       }
-    
+
       let limit = parseInt(req.query.perPage) || 10;
       let page = req.query.page ? req.query.page : 1;
       let skip = (page - 1) * (req.query.perPage ? req.query.perPage : 10);
       let sort = req.query.sort ? {} : { createdAt: -1 };
       let search = req.query.search;
-    
+
       if (search) {
         let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
         const regex = new RegExp(newSearchQuery, "gi");
@@ -45,7 +45,7 @@ export const getAllTeacherTests = catchAsyncError(async (req,res,next) => {
           },
         ];
       }
-    
+
       let aggregateQuery = [
         {
           $match: query,
@@ -74,9 +74,9 @@ export const getAllTeacherTests = catchAsyncError(async (req,res,next) => {
           },
         },
       ];
-    
+
       const tests = await Test.aggregate(aggregateQuery);
-    
+
       res.status(200).json({
         tests: tests[0].data,
         total: tests[0].metadata[0]
@@ -89,7 +89,7 @@ export const getAllTeacherTests = catchAsyncError(async (req,res,next) => {
 })
 
 export const getAllStudentTests = catchAsyncError(async (req,res,next) => {
-    let query = { 
+    let query = {
         creator: req.user.createdBy ?? req.user._id,
     };
 
@@ -195,18 +195,18 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
         creator: req.user._id,
     }
     if(duration){
-     _test.duration= duration ;  
+     _test.duration= duration ;
     }
     if(subjects){
-     _test.subjects= subjects;   
+     _test.subjects= subjects;
     }
     if(startTime){
-     _test.startTime= new Date(startTime);   
+     _test.startTime= new Date(startTime);
     }
     if(endTime){
-     _test.endTime= new Date(endTime);   
+     _test.endTime= new Date(endTime);
     }
-    
+
     if(_test.type === "random"){
 
       const {questions,total} = req.body;
@@ -215,7 +215,7 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
         return res.status(500).json({message:"pass questions and total!"});
       }
 
-      // get last 5 random tests 
+      // get last 5 random tests
       const previousTests = await Test.find({ creator: req.user._id, type: 'random' })
         .sort({ createdAt: -1 })
         .limit(5)
@@ -257,7 +257,7 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
         _test.questions = questions;
     }
     if(_test.type === "live"){
-        
+
     }
 
     const createTest = await Test.create(_test);
@@ -296,7 +296,7 @@ export const  updateTest = catchAsyncError(async (req,res,next) => {
 
      if(!test){
         return res.status(404).json({message:"test not found"});
-     } 
+     }
 
      if(name){
         test.name = name;
@@ -329,7 +329,6 @@ export const  updateTest = catchAsyncError(async (req,res,next) => {
 });
 
 import puppeteer from 'puppeteer'
-import { uploadFile } from "../../config/storageObject.js";
 
 export const generateTest = catchAsyncError(async (req,res,next) => {
     const {id} = req.params;
@@ -347,16 +346,16 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
     const questions = testFound.questions;
        const browser = await puppeteer.launch({ headless: true});
       const page = await browser.newPage();
-  
+
       await page.goto(process.env.BACKEND_URL +'/templates/test_template.html');
-  
+
       await page.evaluate((testFound,questions) => {
         if(testFound.name){
           const testName = document.getElementById('test-name');
           testName.innerHTML = testFound.name;
         }
         if(testFound.duration){
-          const duration = document.getElementById('duration'); 
+          const duration = document.getElementById('duration');
           duration.innerHTML = testFound.duration;
         }
         if(testFound.subjects){
@@ -384,7 +383,7 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
               questionsContainer.innerHTML += questionHTML;
           });
       }, testFound,questions);
-  
+
       ensureDirExists("./public/generated");
       let pdfPath;
       let docPath;
@@ -392,17 +391,17 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
       try {
         // Generate PDF with watermark
         const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
-      
+
         //  converting to docx
-        
+
 
         // Upload the files to S3
         const formData = new FormData();
         formData.append('testPaper', new Blob([pdfBuffer]), 'questionPaper.pdf');
         // formData.append('testPaper', new Blob([wordBuffer]), 'questionPaper.docx');
-      
+
         const response = await axios.post(`${process.env.BACKEND_URL}/api/utils/uploads`, formData);
-        
+
         // console.log('File uploaded successfully:', response.data.assets[0]);
         pdfPath = response.data.assets[0];
         // docPath = response.data.assets[1];
@@ -416,9 +415,9 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
       // try {
       //   const tempDir = path.dirname(pdfPath);
       //   fs.mkdirSync(tempDir, { recursive: true });
-    
+
       //   const input = fs.readFileSync(pdfPath);
-    
+
       //   libre.convert(input, '.docx', undefined, (err, result) => {
       //     if (err) {
       //       console.error(`Error converting PDF to DOCX: ${err}`);
@@ -434,4 +433,3 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
   });
 
 
-  

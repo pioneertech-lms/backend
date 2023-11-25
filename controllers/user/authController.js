@@ -121,13 +121,13 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
     _user.exams = Array.isArray(exams) ? exams: [exams];
   }
   if(req.files['profileImg']){
-    _user.profileImg = new URL(req.files.profileImg[0].key, process.env.BACKEND_URL).toString();
+    _user.profileImg = new URL('/assets/'+req.files.profileImg[0].key, process.env.BACKEND_URL).toString();
   }
   if(req.files['logoImg']){
-    _user.logoImg = new URL(req.files.logoImg[0].key, process.env.BACKEND_URL).toString();
+    _user.logoImg = new URL('/assets/'+req.files.logoImg[0].key, process.env.BACKEND_URL).toString();
   }
   if(req.files['watermarkImg']){
-    _user.watermarkImg = new URL(req.files.watermarkImg[0].key, process.env.BACKEND_URL).toString();
+    _user.watermarkImg = new URL('/assets/'+req.files.watermarkImg[0].key, process.env.BACKEND_URL).toString();
   }
 
 
@@ -263,13 +263,13 @@ export const updateUserInfo = catchAsyncError(async (req, res, next) => {
     user.password = password;
   }
   if(req.files['profileImg']){
-    user.profileImg = new URL(req.files.profileImg[0].key, process.env.BACKEND_URL).toString();
+    user.profileImg = new URL('/assets/'+req.files.profileImg[0].key, process.env.BACKEND_URL).toString();
   }
   if(req.files['logoImg']){
-    user.logoImg = new URL(req.files.logoImg[0].key, process.env.BACKEND_URL).toString();
+    user.logoImg = new URL('/assets/'+req.files.logoImg[0].key, process.env.BACKEND_URL).toString();
   }
   if(req.files['watermarkImg']){
-    user.watermarkImg = new URL(req.files.watermarkImg[0].key, process.env.BACKEND_URL).toString();
+    user.watermarkImg = new URL('/assets/'+req.files.watermarkImg[0].key, process.env.BACKEND_URL).toString();
   }
 
   try {
