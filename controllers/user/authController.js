@@ -63,7 +63,7 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
     subjects,
     className,
   } = req.body;
-
+  console.log(req.body, req.files);
 
   if (password !== confirmPassword) {
     return next(
@@ -200,6 +200,7 @@ export const updateUserInfo = catchAsyncError(async (req, res, next) => {
     subjects,
     className,
   } = req.body;
+  console.log(req.body, req.files);
 
   let user = await User.findById(req.params.id);
 
