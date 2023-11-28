@@ -18,6 +18,7 @@ export const listMaterial = catchAsyncError(async (req, res, next) => {
   try {
     const data = await s3.send(new ListObjectsV2Command({
       Bucket: bucketName,
+      Prefix: "material/"
     }));
 
     const keys = (data.Contents ?? []).map(object => object.Key.replace(/^(material\/)/, ""));
