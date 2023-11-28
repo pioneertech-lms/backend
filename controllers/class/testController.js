@@ -365,6 +365,10 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Quiz Paper</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+        <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"
+            onload="renderMathInElement(document.body);"></script>
         <!-- <link rel="stylesheet" href="styles.css">  -->
         <style>
             body {
@@ -372,14 +376,14 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
                 margin: 0;
                 padding: 0;
             }
-    
+
             .header {
                 text-align: center;
                 padding: 20px;
                 background-color: #f2f2f2;
                 border-bottom: 1px solid #ddd;
             }
-    
+
             .watermark {
                 position: fixed;
                 top: 50%;
@@ -387,48 +391,48 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
                 transform: translate(-50%, -50%);
                 opacity: 0.2;
             }
-    
+
             .question {
                 margin: 20px;
             }
-    
+
             .options {
                 margin-left: 30px;
             }
-    
+
             #questions-container {
                 column-count: 2;
             }
         </style>
     </head>
     <body>
-    
+
     <div class="header">
         <img id="logo" src="${testFound.creator.logoImg ? testFound.creator.logoImg : ""}" alt="Logo" height="50">
         <h1 id="test-name">${testFound.name ? testFound.name : ""}</h1>
         <p>Duration: <span id="duration">${hours}:${minutes}hrs</span> | Subjects: <span id="subjects">${testFound.subjects.join(', ')}</span></p>
     </div>
-    
+
     <div class="watermark">
         <img id="watermark" src="${testFound.creator.watermarkImg ? testFound.creator.watermarkImg : ""}" alt="watermark" height="100">
     </div>
-    
+
     <div id="questions-container">
         ${questionsHtml}
     </div>
-    
+
     </body>
     </html>
     `
-  
+
       // (async () => {
         const browser = await puppeteer.launch({ headless: true});
         const page = await browser.newPage();
-  
+
         // await page.goto(process.env.BACKEND_URL +'/templates/test_template.html');
-      
-        await page.setContent(htmlContent, { waitUntil: 'networkidle0' })  
-        
+
+        await page.setContent(htmlContent, { waitUntil: 'networkidle0' })
+
       let pdfPath;
       let docPath;
 
@@ -438,7 +442,7 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
         // Convert HTML to DOCX using mammoth
         const { value } = await mammoth.extractRawText({ arrayBuffer: Buffer.from(htmlContent) });
         const wordBuffer = Buffer.from(value, 'utf-8');
-    
+
 
         // Upload the files to S3
         const formData = new FormData();
