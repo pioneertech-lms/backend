@@ -33,7 +33,7 @@ app.use(cookieParser());
 // app.use(flash());
 
 // storage middleware
-app.get("/assets/*",getFileStream);
+app.get("/assets/*", getFileStream);
 
 app.use(
   session({
@@ -87,7 +87,7 @@ app.use(function (req, res, next) {
 });
 
 // seed script
-import {seed} from "./config/seed.js";
+import { seed } from "./config/seed.js";
 seed();
 
 // User route imports
@@ -100,24 +100,24 @@ app.use("/api/admin/", adminPrimaryRoutes);
 
 // util routes
 import utilsRoute from './routes/user/utilsRoute.js';
-app.use("/api/utils/",utilsRoute);
+app.use("/api/utils/", utilsRoute);
 
 // class routes
 import classRoute from './routes/class/primaryRoute.js';
-app.use("/api/class/",classRoute);
+app.use("/api/class/", classRoute);
 
 // question routes
 import questionRoute from './routes/class/questionRoute.js';
-app.use("/api/question/",questionRoute);
+app.use("/api/question/", questionRoute);
 
 // report routes
 import reportRoute from './routes/class/reportRoute.js';
-app.use("/api/report/",reportRoute);
+app.use("/api/report/", reportRoute);
 
 // test routes
 import testRoute from './routes/class/testRoute.js';
 import { getFileStream } from "./config/storageObject.js";
-app.use("/api/test/",testRoute);
+app.use("/api/test/", testRoute);
 
 // // Teacher route imports
 // import teacherRoutes from "./routes/teacher/primaryRoute.js";
@@ -128,7 +128,7 @@ app.use("/api/test/",testRoute);
 // app.use("/api/student",studentRoutes);
 
 // test route
-app.get("/status", (req,res)=>{
+app.get("/status", (req, res) => {
   // res.render("test");
   res.status(200).send("Server is up & running...")
 })
@@ -139,9 +139,11 @@ app.use("/build", express.static("../frontend/public/build", { immutable: true, 
 app.use("/", express.static("../frontend/public", { maxAge: "1h" }));
 app.all(
   "*",
-  createRequestHandler({
-    build: await import("../frontend/build/index.js"),
-  })
+  async (req, res, next) => {
+    return await createRequestHandler({
+      build: await import("../frontend/build/index.js"),
+    })(req, res, next)
+  }
 );
 
 app.use(ErrorMiddleware);
