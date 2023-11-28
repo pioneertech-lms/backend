@@ -31,12 +31,12 @@ export const bucketName = 'codo-lms-data';
 
 export const getFileStream = async (req, res, next) => {
   const command = new GetObjectCommand({
-    Key: req.params.objectId,
+    Key: req.params[0],
     Bucket: bucketName,
   });
   try {
     const object = await s3.send(command);
-    res.type(req.params.objectId.split('.').pop() ?? "application/octet-stream");
+    res.type(req.params[0].split('.').pop() ?? "application/octet-stream");
     return object.Body.pipe(res);
   } catch (err) {
     console.error(err);

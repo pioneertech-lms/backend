@@ -33,7 +33,7 @@ app.use(cookieParser());
 // app.use(flash());
 
 // storage middleware
-app.get("/assets/:objectId",getFileStream);
+app.get("/assets/*",getFileStream);
 
 app.use(
   session({
