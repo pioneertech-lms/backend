@@ -7,12 +7,14 @@ import { readFileSync } from "fs";
 
 export const getAllQuestions = catchAsyncError(async (req,res,next) => {
     let query = {
-        isDeleted: false,
+        // subject:req.user.subjects,
       };
-    
-      if(req.query.isDeleted=== "true"){
-        query.isActive = true;
+
+        // Check if question.subject is one of req.user.subjects
+      if (req.user.subjects && req.user.subjects.length > 0) {
+        query.subject = { $in: req.user.subjects };
       }
+    
     
       let limit = parseInt(req.query.perPage) || 10;
       let page = parseInt(req.query.page, 10) || 1;
@@ -42,8 +44,17 @@ export const getAllQuestions = catchAsyncError(async (req,res,next) => {
           {
             yearOfAppearance: regex,
           },
+          {
+            isCommon:true,
+          }
         ];
       }
+
+      // query.$or = [
+        // {
+        //   subject:req.user.subjects,
+        // },
+      // ]
 
       // Filter by topics
       if (req.query.topic) {
@@ -184,7 +195,6 @@ export const updateQuestion = catchAsyncError(async (req,res,next) => {
         yearOfAppearance,
         exam,
         subject,
-        isDeleted,
     } = req.body;
 
     
@@ -221,9 +231,6 @@ export const updateQuestion = catchAsyncError(async (req,res,next) => {
     if(subject){
         questionFound.subject = subject;
     }
-    if(isDeleted=="false"){
-        questionFound.isDeleted = false;
-    }
     if(options){
         let opt = [];
 
@@ -248,15 +255,17 @@ export const deleteSingleQuestion = catchAsyncError(async (req,res,next) => {
     if(!questionFound){
         return res.status(404).json({message:"question not found!"});
     } else {
-        questionFound.isDeleted = true;
-        await questionFound.save();
+      await Question.deleteOne({ _id: questionFound._id });
+
+        // questionFound.isDeleted = true;
+        // await questionFound.save();
         return res.status(200).json({message:"question deleted successfully"});
     }
 })
 
 export const addMultipleQuestions = catchAsyncError(async (req,res,next) => {
 
-  const url =process.env.BACKEND_URL +'/'+ req.files.questionSet[0].key;
+  const url =process.env.BACKEND_URL +'/assets/'+ req.files.questionSet[0].key;
   const response = await axios.get(url, { responseType: 'arraybuffer' });
   
   // Get the buffer containing the file data
@@ -312,7 +321,6 @@ worksheet.eachRow(async (row, rowNumber) => {
     formData.append('questionImg', new Blob([imageBuf.buffer]), 'questionImg.jpg');
   
     const response = await axios.post(`${process.env.BACKEND_URL}/api/utils/uploads`, formData);
-    // console.log('File uploaded successfully:', response.data.assets[0]);
     
     let imgPath = response.data.assets[0];
     // console.log(imgPath)
@@ -337,7 +345,7 @@ worksheet.eachRow(async (row, rowNumber) => {
         case 10: // optionFourImage
         _question.options[3] =_question.options[3] + dataUrl;
           break;
-        case 14: // Column 14: explanationImage
+        case 13: // Column 14: explanationImage
           _question.explanation = _question.explanation + dataUrl;
           break;
         default:
@@ -349,13 +357,23 @@ worksheet.eachRow(async (row, rowNumber) => {
   if(_question.number==="number"){
     return;
   }else {
-    try {
-      await Question.create(_question);
-    } catch (error) {
-      results.error = error._message;
-      results.unsavedQues.push(row.values);
-    }
+    // const que = await Question.create(_question);
+    // console.log(que);
+    // try {
+    // } catch (error) {
+    //   results.error = error._message;
+    //   results.unsavedQues.push(row.values);
+    // }
   }
+
+  try {
+    const que = await Question.create(_question);
+  } catch (error) {
+  
+    results.error = error.message || 'Duplicate question number for the user';
+    results.unsavedQues.push(_question);
+  }
+  
 });
 return res.status(200).json(results);
 })

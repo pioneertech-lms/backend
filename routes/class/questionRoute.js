@@ -15,7 +15,7 @@ const router = express.Router();
 
 router
   .route("/")
-  .get(getAllQuestions)
+  .get(authorizedUser,getAllQuestions)
   .post(authorizedUser,addSingleQuestion);
 
 router

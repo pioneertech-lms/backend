@@ -3,11 +3,9 @@ import {Test} from "../../models/Test.js";
 import { Question } from "../../models/Question.js";
 import {ensureDirExists} from "../../utils/files.js";
 import axios from 'axios';
-import libre from 'libreoffice-convert';
 import fs from 'fs';
 import path from 'path';
-import { PDFDocument } from 'pdf-lib';
-import { Document, Packer, Paragraph, TextRun } from 'docx';
+import mammoth from 'mammoth';
 
 export const getAllTeacherTests = catchAsyncError(async (req,res,next) => {
     let query = {
@@ -344,71 +342,118 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
 
     // generate pdf
     const questions = testFound.questions;
-       const browser = await puppeteer.launch({ headless: true});
-      const page = await browser.newPage();
 
-      await page.goto(process.env.BACKEND_URL +'/templates/test_template.html');
+    const startTime = new Date(testFound.startTime);
+    const endTime = new Date(testFound.endTime);
+    const durationInMinutes = (endTime - startTime) / (1000 * 60);
+    const hours = Math.floor(durationInMinutes / 60);
+    const minutes = Math.floor(durationInMinutes % 60);
 
-      await page.evaluate((testFound,questions) => {
-        if(testFound.name){
-          const testName = document.getElementById('test-name');
-          testName.innerHTML = testFound.name;
-        }
-        if(testFound.duration){
-          const duration = document.getElementById('duration');
-          duration.innerHTML = testFound.duration;
-        }
-        if(testFound.subjects){
-          const subjects = document.getElementById('subjects');
-          subjects.innerHTML = testFound.subjects.join(', ');
-        }
-        if(testFound?.creator?.logo){
-          const logo = document.getElementById('logo');
-          logo.setAttribute('src', testFound?.creator?.logo)
-        }
-        if(testFound?.creator?.watermark){
-          const watermark = document.getElementById('watermark');
-          watermark.setAttribute('src', testFound.creator?.watermark)
-        }
-        const questionsContainer = document.getElementById('questions-container');
-          questions.forEach((question,i) => {
-              const questionHTML = `
-                  <div class="question">
-                      <p>${i+1}. ${question.question}</p>
-                      <div class="options">
-                          ${question.options.map((option, index) => `<label><input type="radio" name="q${i}" value="${index}"> ${option}</label><br>`).join('')}
-                      </div>
-                  </div>
-              `;
-              questionsContainer.innerHTML += questionHTML;
-          });
-      }, testFound,questions);
+    const questionsHtml = questions.map((question, i) => `
+      <div class="question">
+          <p>${i + 1}. ${question.question}</p>
+          <div class="options">
+              ${question.options.map((option, index) => `<label><input type="radio" name="q${i}" value="${index}"> ${option}</label><br>`).join('')}
+          </div>
+      </div>
+  `).join('');
 
-      ensureDirExists("./public/generated");
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Quiz Paper</title>
+        <!-- <link rel="stylesheet" href="styles.css">  -->
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 0;
+            }
+    
+            .header {
+                text-align: center;
+                padding: 20px;
+                background-color: #f2f2f2;
+                border-bottom: 1px solid #ddd;
+            }
+    
+            .watermark {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                opacity: 0.2;
+            }
+    
+            .question {
+                margin: 20px;
+            }
+    
+            .options {
+                margin-left: 30px;
+            }
+    
+            #questions-container {
+                column-count: 2;
+            }
+        </style>
+    </head>
+    <body>
+    
+    <div class="header">
+        <img id="logo" src="${testFound.creator.logoImg ? testFound.creator.logoImg : ""}" alt="Logo" height="50">
+        <h1 id="test-name">${testFound.name ? testFound.name : ""}</h1>
+        <p>Duration: <span id="duration">${hours}:${minutes}hrs</span> | Subjects: <span id="subjects">${testFound.subjects.join(', ')}</span></p>
+    </div>
+    
+    <div class="watermark">
+        <img id="watermark" src="${testFound.creator.watermarkImg ? testFound.creator.watermarkImg : ""}" alt="watermark" height="100">
+    </div>
+    
+    <div id="questions-container">
+        ${questionsHtml}
+    </div>
+    
+    </body>
+    </html>
+    `
+  
+      // (async () => {
+        const browser = await puppeteer.launch({ headless: true});
+        const page = await browser.newPage();
+  
+        // await page.goto(process.env.BACKEND_URL +'/templates/test_template.html');
+      
+        await page.setContent(htmlContent, { waitUntil: 'networkidle0' })  
+        
       let pdfPath;
       let docPath;
 
       try {
         // Generate PDF with watermark
         const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
-
-        //  converting to docx
-
+        // Convert HTML to DOCX using mammoth
+        const { value } = await mammoth.extractRawText({ arrayBuffer: Buffer.from(htmlContent) });
+        const wordBuffer = Buffer.from(value, 'utf-8');
+    
 
         // Upload the files to S3
         const formData = new FormData();
         formData.append('testPaper', new Blob([pdfBuffer]), 'questionPaper.pdf');
-        // formData.append('testPaper', new Blob([wordBuffer]), 'questionPaper.docx');
+        formData.append('testPaper', new Blob([wordBuffer]), 'questionPaper.docx');
 
         const response = await axios.post(`${process.env.BACKEND_URL}/api/utils/uploads`, formData);
 
-        // console.log('File uploaded successfully:', response.data.assets[0]);
         pdfPath = response.data.assets[0];
-        // docPath = response.data.assets[1];
+        docPath = response.data.assets[1];
       } catch (error) {
         console.error('Error in the main code block:', error.message);
       } finally {
         await browser.close();
+        console.log({pdfPath,docPath})
         return res.status(200).json({message:"test generated successfully",pdf:pdfPath,doc:docPath});
       }
       // converting to docx

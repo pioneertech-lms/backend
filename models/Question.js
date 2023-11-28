@@ -48,10 +48,6 @@ const schema = new mongoose.Schema(
         ref: "user",
         // required: true,
     },
-    isDeleted: {
-      type: Boolean,
-      default: false,
-    },
     isCommon:{
       type:Boolean,
       default:false,
@@ -63,17 +59,19 @@ const schema = new mongoose.Schema(
 );
 
 schema.pre('save', async function (next) {
+  if(!this.isNew){
+    next();
+  }
   try {
     const existingQuestion = await Question.findOne({
       number: this.number,
       creator: this.creator,
-      isDeleted: false,
     });
 
     if (existingQuestion) {
-      const error = new Error('Duplicate question number for the user');
-      error.name = 'ValidationError';
-      next(error);
+
+      // Log the duplicate question to the unsavedQues array
+      return next(new Error('Duplicate question number for the user'));
     }
 
     return next();

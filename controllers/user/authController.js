@@ -16,25 +16,26 @@ export const loginUser = catchAsyncError(async (req, res, next) => {
   }).select("+password");
 
   if (!user) {
-    res.status(401).json({message:"Account with this credentials doesn't exist"})
-    return next(
-      new ErrorHandler("Account with this credentials doesn't exist.", 401)
-    );
+    return res.status(401).json({message:"Account with this credentials doesn't exist"})
+    // return next(
+    //   new ErrorHandler("Account with this credentials doesn't exist.", 401)
+    // );
   }
 
   if (user.status === false) {
-    return next(
-      new ErrorHandler(
-        "Your account is deactivate. Please contact admin to retrieve your account.",
-        403
-      )
-    );
+    return res.status(403).json({message:"Your account is deactivate. Please contact admin to retrieve your account."})
+    // return next(
+    //   new ErrorHandler(
+    //     "Your account is deactivate. Please contact admin to retrieve your account.",
+    //     403
+    //   )
+    // );
   }
 
   let isMatch = await user.comparePassword(password);
   if (!isMatch) {
-    res.status(401).json({message:"Invalid login credentials"})
-    return next(new ErrorHandler("Invalid login credentials", 401));
+    return res.status(401).json({message:"Invalid login credentials"})
+    // return next(new ErrorHandler("Invalid login credentials", 401));
   }
 
   sendToken(user, 200, res);
@@ -63,12 +64,16 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
     subjects,
     className,
   } = req.body;
-  console.log(req.body, req.files);
+  // console.log(req.body, req.files);
 
-  if (password !== confirmPassword) {
-    return next(
-      new ErrorHandler("Password and confirm password must be same.")
-    );
+  // if (password !== confirmPassword) {
+  //   return next(
+  //     new ErrorHandler("Password and confirm password must be same.")
+  //   );
+  // }
+
+  if(phone && phone.length !== 10){
+    return res.status(400).json({message:"Phone number must be 10 digits"});
   }
 
   let user = await User.findOne({
@@ -78,7 +83,7 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
   });
 
   if (user) {
-    return next(new ErrorHandler("Email or Phone already registered.", 400));
+    return res.status(400).json({message:"Email or Phone already registered."});
   }
 
   let _user = {
@@ -159,10 +164,10 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
 export const userChangePassword = catchAsyncError(async (req, res, next) => {
   const { currentPassword, newPassword, confirmPassword } = req.body;
 
-  if (newPassword !== confirmPassword)
-    return next(
-      new ErrorHandler("Password and confirm password does't match", 400)
-    );
+  if (newPassword !== confirmPassword) return res.status(400).json({message:"Password and confirm password does't match"});
+    // return next(
+    //   new ErrorHandler("Password and confirm password does't match", 400)
+    // );
 
   const user = await User.findOne({ email: req.user.email }).select(
     "+password"
@@ -170,7 +175,8 @@ export const userChangePassword = catchAsyncError(async (req, res, next) => {
   const correctPass = await user.comparePassword(currentPassword);
 
   if (!correctPass) {
-    return next(new ErrorHandler("Incorrect password", 401));
+    return res.status(401).json({message:"Incorrect password"})
+    // return next(new ErrorHandler("Incorrect password", 401));
   }
 
   user.password = newPassword;
@@ -200,7 +206,7 @@ export const updateUserInfo = catchAsyncError(async (req, res, next) => {
     subjects,
     className,
   } = req.body;
-  console.log(req.body, req.files);
+  // console.log(req.body, req.files);
 
   let user = await User.findById(req.params.id);
 

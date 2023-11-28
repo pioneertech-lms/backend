@@ -35,7 +35,7 @@ export const authorizedUser = async(req, res, next) => {
 export const checkUserModuleAccess = (userRole, moduleName) => {
   return (req, res, next) => {
     if(!req.user){
-      console.log(req.user)
+      // console.log(req.user)
       return res.status(501).json({message:"Don't have access"});
     }
     if (req.user.role === "superadmin" || req.user.role === userRole || req.user.modules.includes(moduleName)) {
