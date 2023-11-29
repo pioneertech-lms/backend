@@ -1,4 +1,4 @@
-import { catchAsyncError } from "../../middleWares/catchAsyncError.js"; 
+import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
 import { Question } from "../../models/Question.js";
 import axios from 'axios';
 
@@ -14,14 +14,14 @@ export const getAllQuestions = catchAsyncError(async (req,res,next) => {
       if (req.user.subjects && req.user.subjects.length > 0) {
         query.subject = { $in: req.user.subjects };
       }
-    
-    
+
+
       let limit = parseInt(req.query.perPage) || 10;
       let page = parseInt(req.query.page, 10) || 1;
       let skip = (page - 1) * limit;
       let sort = req.query.sort ? {} : { number: -1 };
       let search = req.query.search;
-    
+
       if (search) {
         let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
         const regex = new RegExp(newSearchQuery, "gi");
@@ -60,8 +60,8 @@ export const getAllQuestions = catchAsyncError(async (req,res,next) => {
       if (req.query.topic) {
         const topics = Array.isArray(req.query.topic) ? req.query.topic : [req.query.topic];
         query.topic = { $in: topics };
-      }      
-    
+      }
+
       let aggregateQuery = [
         {
           $match: query,
@@ -81,11 +81,11 @@ export const getAllQuestions = catchAsyncError(async (req,res,next) => {
           },
         },
       ];
-          
+
       const questions = await Question.aggregate(aggregateQuery);
       const totalQuestions = questions[0].metadata[0] ? questions[0].metadata[0].total : 0;
       const totalPages = Math.ceil(totalQuestions / limit);
-    
+
       res.status(200).json({
         questions: questions[0].data,
         total: totalPages,
@@ -110,7 +110,7 @@ export const addSingleQuestion = catchAsyncError(async (req,res,next) => {
         subject
     } = req.body;
 
-    
+
     const questionFound = await Question.findOne({question,creator:req.user._id});
     if(questionFound){
         return res.status(501).json({message:"question already exist!"});
@@ -122,7 +122,7 @@ export const addSingleQuestion = catchAsyncError(async (req,res,next) => {
         options:[],
         creator:req.user._id,
     };
-    
+
     if(topic){
         _question.topic = topic
     }
@@ -144,8 +144,8 @@ export const addSingleQuestion = catchAsyncError(async (req,res,next) => {
     if(subject){
         _question.subject = subject
     }
-    
-    _question.isCommon= isCommon && isCommon === "true" ? true : false; 
+
+    _question.isCommon= isCommon && isCommon === "true" ? true : false;
 
     if(options){
         for(let i=0; i< options.length;i++){
@@ -153,7 +153,7 @@ export const addSingleQuestion = catchAsyncError(async (req,res,next) => {
         }
     }
 
-    
+
     try {
       const questionCreate = await Question.create(_question);
       if(questionCreate){
@@ -197,9 +197,9 @@ export const updateQuestion = catchAsyncError(async (req,res,next) => {
         subject,
     } = req.body;
 
-    
+
     const questionFound = await Question.findById(req.params.id);
-    
+
     if(!questionFound){
         return res.status(404).json({message:"question not found!"});
     }
@@ -267,7 +267,7 @@ export const addMultipleQuestions = catchAsyncError(async (req,res,next) => {
 
   const url =process.env.BACKEND_URL +'/assets/'+ req.files.questionSet[0].key;
   const response = await axios.get(url, { responseType: 'arraybuffer' });
-  
+
   // Get the buffer containing the file data
   const fileBuffer = Buffer.from(response.data, 'binary');
 
@@ -286,7 +286,10 @@ let results = {
   message: "questions added successfully",
 };
 
-worksheet.eachRow(async (row, rowNumber) => {
+const rowsData = [];
+worksheet.eachRow((row, rowNumber) => rowsData.push([row, rowNumber]));
+
+for await (const [row, rowNumber] of rowsData){
   // console.log("Row " + rowNumber + " = " + JSON.stringify(row.values));
 
   let _question = {};
@@ -312,24 +315,24 @@ worksheet.eachRow(async (row, rowNumber) => {
   _question.creator = req.user._id;
 
   const images = worksheet.getImages();
-  images.forEach(async (img) => {
-    const imgRow = img.range.tl.row;
+  for await (const img of images) {
+    const imgRow = Math.floor(img.range.tl.row);
+    const imgCol = Math.floor(img.range.tl.col);
     const imageBuf = workbook.getImage(img.imageId);
 
     // Upload the files to S3
     const formData = new FormData();
     formData.append('questionImg', new Blob([imageBuf.buffer]), 'questionImg.jpg');
-  
+
     const response = await axios.post(`${process.env.BACKEND_URL}/api/utils/uploads`, formData);
-    
+
     let imgPath = response.data.assets[0];
     // console.log(imgPath)
 
     if (imgRow === rowNumber - 1) {
-      const dataUrl = `<img src='${imgPath}'></img> `;
+      const dataUrl = `<img src='${imgPath}' />`;
       // const dataUrl = `<img src='data:image/${imageBuf.extension};base64,${imageBuf.buffer.toString('base64')}'></img> `;
-
-      switch (Math.round(img.range.tl.col)) {
+      switch (imgCol) {
         case 2: // questionImage
           _question.question = _question.question + dataUrl;
           break;
@@ -352,10 +355,10 @@ worksheet.eachRow(async (row, rowNumber) => {
           break;
       }
     }
-  });
+  };
 
-  if(_question.number==="number"){
-    return;
+  if(_question.number==="number" || !_question.number){
+    continue;
   }else {
     // const que = await Question.create(_question);
     // console.log(que);
@@ -369,11 +372,10 @@ worksheet.eachRow(async (row, rowNumber) => {
   try {
     const que = await Question.create(_question);
   } catch (error) {
-  
-    results.error = error.message || 'Duplicate question number for the user';
-    results.unsavedQues.push(_question);
+    results.unsavedQues.push({
+      [_question.number]: error.message || 'Duplicate question number for the user'
+    });
   }
-  
-});
+};
 return res.status(200).json(results);
 })
