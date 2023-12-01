@@ -320,36 +320,36 @@ for await (const [row, rowNumber] of rowsData){
     const imgCol = Math.floor(img.range.tl.col);
     const imageBuf = workbook.getImage(img.imageId);
 
-    // Upload the files to S3
-    const formData = new FormData();
-    formData.append('questionImg', new Blob([imageBuf.buffer]), 'questionImg.jpg');
+    if (imgRow === rowNumber - 1 && [2, 4, 6, 8, 10, 13].includes(imgCol)) {
+      // Upload the files to S3
+      const formData = new FormData();
+      formData.append('questionImg', new Blob([imageBuf.buffer]), 'questionImg.jpg');
 
-    const response = await axios.post(`${process.env.BACKEND_URL}/api/utils/uploads`, formData);
+      const response = await axios.post(`${process.env.BACKEND_URL}/api/utils/uploads`, formData);
 
-    let imgPath = response.data.assets[0];
-    // console.log(imgPath)
-
-    if (imgRow === rowNumber - 1) {
+      let imgPath = response.data.assets[0];
+      // console.log(imgPath)
       const dataUrl = `<img src='${imgPath}' />`;
+
       // const dataUrl = `<img src='data:image/${imageBuf.extension};base64,${imageBuf.buffer.toString('base64')}'></img> `;
       switch (imgCol) {
         case 2: // questionImage
-          _question.question = _question.question + dataUrl;
+          _question.question = _question.question ?? "" + dataUrl;
           break;
         case 4: // optionOneImage
-          _question.options[0] =_question.options[0] + dataUrl;
+          _question.options[0] =_question.options[0] ?? "" + dataUrl;
           break;
         case 6: // optionTwoImage
-        _question.options[1] =_question.options[1] + dataUrl;
+        _question.options[1] =_question.options[1] ?? "" + dataUrl;
           break;
         case 8: // optionThreeImage
-        _question.options[2] =_question.options[2] + dataUrl;
+        _question.options[2] =_question.options[2] ?? "" + dataUrl;
           break;
         case 10: // optionFourImage
-        _question.options[3] =_question.options[3] + dataUrl;
+        _question.options[3] =_question.options[3] ?? "" + dataUrl;
           break;
         case 13: // Column 14: explanationImage
-          _question.explanation = _question.explanation + dataUrl;
+          _question.explanation = _question.explanation ?? "" + dataUrl;
           break;
         default:
           break;
