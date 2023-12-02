@@ -6,6 +6,7 @@ import {
     addReport,
     getReportByTest,
     updateReport,
+    getAnalysisReport,
     getReportByStudent
 } from "../../controllers/class/reportController.js";
 
@@ -29,6 +30,12 @@ router
 router
     .route("/teacher/:teacherId")
     .get(authorizedUser,getAllReports)
+
+
+// analysis report
+router
+    .route("/analysis/:studentId")
+    .get(authorizedUser,getAnalysisReport)
 
 router
     .route("/:id")

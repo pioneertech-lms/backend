@@ -3,6 +3,7 @@ import {Test} from "../../models/Test.js";
 import { Question } from "../../models/Question.js";
 import {ensureDirExists} from "../../utils/files.js";
 import axios from 'axios';
+import htmlDocx from 'html-docx-js';
 import fs from 'fs';
 import path from 'path';
 import mammoth from 'mammoth';
@@ -439,25 +440,29 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
       try {
         // Generate PDF with watermark
         const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
-        // Convert HTML to DOCX using mammoth
-        const { value } = await mammoth.extractRawText({ arrayBuffer: Buffer.from(htmlContent) });
-        const wordBuffer = Buffer.from(value, 'utf-8');
 
+        const wordBuffer = htmlDocx.asBlob(htmlContent);
+
+        // Convert Blob to Buffer
+        const wordArrayBuffer = await new Response(wordBuffer).arrayBuffer();
+        const docxBuffer = Buffer.from(wordArrayBuffer);
 
         // Upload the files to S3
-        const formData = new FormData();
-        formData.append('testPaper', new Blob([pdfBuffer]), 'questionPaper.pdf');
-        formData.append('testPaper', new Blob([wordBuffer]), 'questionPaper.docx');
+        let formData1 = new FormData();
+        formData1.append('testPaper', new Blob([pdfBuffer]), 'questionPaper.pdf');
+        const response1 = await axios.post(`${process.env.BACKEND_URL}/api/utils/uploads`, formData1);
+        
+        let formData2 = new FormData();
+        formData2.append('testPaper',  new Blob([docxBuffer]), 'questionPaper.docx');
+        const response2 = await axios.post(`${process.env.BACKEND_URL}/api/utils/uploads`, formData2);
 
-        const response = await axios.post(`${process.env.BACKEND_URL}/api/utils/uploads`, formData);
-
-        pdfPath = response.data.assets[0];
-        docPath = response.data.assets[1];
+        pdfPath = response1.data.assets[0];
+        docPath = response2.data.assets[0];
       } catch (error) {
         console.error('Error in the main code block:', error.message);
       } finally {
         await browser.close();
-        console.log({pdfPath,docPath})
+        // console.log({pdfPath,docPath})
         return res.status(200).json({message:"test generated successfully",pdf:pdfPath,doc:docPath});
       }
       // converting to docx

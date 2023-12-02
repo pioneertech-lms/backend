@@ -4,6 +4,7 @@ import {
   registerUser,
   updateUserInfo,
   userChangePassword,
+  logoutUser,
 } from "../../controllers/user/authController.js";
 import {authorizedUser, extractUserInfo } from "../../middleWares/accessAuth.js";
 import {upload} from "../../middleWares/uploads.js";
@@ -13,6 +14,10 @@ const router = express.Router();
 router
   .route("/login")
   .post(extractUserInfo,loginUser);
+
+  router
+  .route("/logout")
+  .post(extractUserInfo,logoutUser);
 
 router
   .route("/register")

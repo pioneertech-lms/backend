@@ -354,3 +354,84 @@ export const getReportByStudent = catchAsyncError(async (req,res,next) => {
     search: search ? search : "",
   })
 }) 
+
+export const getAnalysisReport = catchAsyncError(async (req,res,next) => {
+  const {studentId} = req.params;
+  const {
+    subject,
+    topic,
+  } = req.query;
+
+  const studentFound = await Report.find({student: new ObjectId(studentId) });
+
+  if(!studentFound){
+    return res.status(404).json({message:"student not found!"});
+  }
+
+  let analysisReport ={};
+
+  const subjects = subject ? Array.isArray(subject) ? subject : [subject] : await Report.distinct("subject", {student: new ObjectId(studentId) });
+  
+  analysisReport.subjects = subjects;
+  
+  for (const subject of subjects) {
+    if (subject && subject !== "") {
+      const totalQuestions = await Report.countDocuments({ student: new ObjectId(studentId), subject });
+      const correctAnswers = await Report.countDocuments({ student: new ObjectId(studentId), subject, isCorrect: true });
+      const percentageCorrect = (correctAnswers / totalQuestions) * 100;
+
+      const totalMarksObtained = await Report.aggregate([
+        { $match: { student: new ObjectId(studentId), subject } },
+        { $group: { _id: null, totalMarks: { $sum: "$marksObtained" } } }
+      ]);
+
+      const totalMarks = await Question.aggregate([
+        { $match: { subject } },
+        { $group: { _id: null, totalMarks: { $sum: "$marks" } } }
+      ]);
+
+      const topics = topic ? Array.isArray(topic) ? topic : [topic] : await Report.distinct("topic", { student: new ObjectId(studentId), subject });
+      const topicAnalysis = [];
+
+      for (const topic of topics) {
+        if (topic && topic !== "") {
+          const totalQuestionsByTopic = await Report.countDocuments({ student: new ObjectId(studentId), subject, topic });
+          const correctAnswersByTopic = await Report.countDocuments({ student: new ObjectId(studentId), subject, topic, isCorrect: true });
+          const percentageCorrectByTopic = (correctAnswersByTopic / totalQuestionsByTopic) * 100;
+
+          topicAnalysis.push({
+            topic,
+            totalQuestions: totalQuestionsByTopic,
+            correctAnswers: correctAnswersByTopic,
+            percentageCorrect: percentageCorrectByTopic
+          });
+        }
+      }
+
+      analysisReport[subject] = {
+        totalQuestions,
+        correctAnswers,
+        percentageCorrect,
+        totalMarksObtained: totalMarksObtained[0]?.totalMarks || 0,
+        totalMarks: totalMarks[0]?.totalMarks || 0,
+        topicAnalysis
+      };
+    }
+  }
+
+  const overalPerformance = {
+    totalQuestions: await Report.countDocuments({ student: new ObjectId(studentId) }),
+    correctAnswers: await Report.countDocuments({ student: new ObjectId(studentId), isCorrect: true }),
+    totalMarksObtained: await Report.aggregate([
+      { $match: { student: new ObjectId(studentId) } },
+      { $group: { _id: null, totalMarks: { $sum: "$marksObtained" } } }
+    ]),
+    totalMarks: await Question.aggregate([
+      { $group: { _id: null, totalMarks: { $sum: "$marks" } } }
+    ])
+  };
+
+  analysisReport.overalPerformance = overalPerformance;
+
+  res.status(200).json(analysisReport);
+});

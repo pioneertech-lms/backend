@@ -38,8 +38,26 @@ export const loginUser = catchAsyncError(async (req, res, next) => {
     // return next(new ErrorHandler("Invalid login credentials", 401));
   }
 
+  if(user.role == "admin" || !user.isLoggedIn){
+    user.isLoggedIn = true;
+    await user.save();
+  }else {
+    return res.status(401).json({message:"User already logged in from another device"})
+  }
+
   sendToken(user, 200, res);
 });
+
+// Logout
+export const logoutUser = catchAsyncError(async (req, res, next) => {
+  req.logout();
+
+  req.user.isLoggedIn = false;
+  await req.user.save();
+
+  res.status(200).json({ message: "Logout successful" });
+});
+
 
 // register
 export const registerUser = catchAsyncError(async (req, res, next) => {
