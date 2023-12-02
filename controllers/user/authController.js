@@ -4,6 +4,7 @@ import ErrorHandler from "../../utils/ErrorHandler.js";
 import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
 import { User } from "../../models/User.js";
 import { sendToken } from "../../utils/sendToken.js";
+import { error } from "console";
 
 //login
 export const loginUser = catchAsyncError(async (req, res, next) => {
@@ -50,12 +51,11 @@ export const loginUser = catchAsyncError(async (req, res, next) => {
 
 // Logout
 export const logoutUser = catchAsyncError(async (req, res, next) => {
-  req.logout();
-
-  req.user.isLoggedIn = false;
-  await req.user.save();
-
-  res.status(200).json({ message: "Logout successful" });
+  await User.updateOne({ _id: req.user._id }, { $set: { isLoggedIn: false } });
+  req.logout((err) => {
+    if(err) throw error;
+    res.status(200).json({ message: "Logout successful" });
+  });
 });
 
 
@@ -81,6 +81,7 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
     exams,
     subjects,
     className,
+    standard
   } = req.body;
   // console.log(req.body, req.files);
 
@@ -133,6 +134,9 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
   }
   if(description){
     _user.description = description;
+  }
+  if(standard){
+    _user.standard = Number(standard);
   }
   if(className){
     _user.className = className;
@@ -220,6 +224,7 @@ export const updateUserInfo = catchAsyncError(async (req, res, next) => {
     dob,
     gender,
     description,
+    standard,
     exams,
     subjects,
     className,
@@ -274,6 +279,9 @@ export const updateUserInfo = catchAsyncError(async (req, res, next) => {
   }
   if(description){
     user.description = description;
+  }
+  if(standard){
+    user.standard = Number(standard);
   }
   if(className){
     user.className = className;

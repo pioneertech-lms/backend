@@ -1,6 +1,6 @@
 import express from "express";
 import {
-  loginUser,  
+  loginUser,
   registerUser,
   updateUserInfo,
   userChangePassword,
@@ -17,7 +17,7 @@ router
 
   router
   .route("/logout")
-  .post(extractUserInfo,logoutUser);
+  .post(authorizedUser, logoutUser);
 
 router
   .route("/register")
@@ -30,5 +30,5 @@ router
 router
   .route("/update/:id")
   .put(authorizedUser,upload,updateUserInfo)
-  
+
 export default router;
