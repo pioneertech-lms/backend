@@ -14,6 +14,9 @@ export const getAllQuestions = catchAsyncError(async (req,res,next) => {
       if (req.user.subjects && req.user.subjects.length > 0) {
         query.subject = { $in: req.user.subjects };
       }
+      if (req.user.exams && req.user.exams.length > 0) {
+        query.exams = { $in: req.user.exams };
+      }
 
 
       let limit = parseInt(req.query.perPage) || 10;
