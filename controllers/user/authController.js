@@ -12,7 +12,8 @@ export const loginUser = catchAsyncError(async (req, res, next) => {
 
   const user = await User.findOne({
     $or: [{ phone: username }, { email: username }, {username:username}],
-    deleted: false,
+    isDeleted: false,
+    isActive: true,
     status: true,
   }).select("+password");
 
