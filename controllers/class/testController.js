@@ -432,7 +432,7 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
 
         // await page.goto(process.env.BACKEND_URL +'/templates/test_template.html');
 
-        await page.setContent(htmlContent, { waitUntil: 'networkidle0' })
+      await page.setContent(htmlContent, { waitUntil: "networkidle0" })
 
       let pdfPath;
       let docPath;
@@ -441,7 +441,7 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
         // Generate PDF with watermark
         const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
 
-        const wordBuffer = htmlDocx.asBlob(htmlContent);
+        const wordBuffer = htmlDocx.asBlob(await page.content());
 
         // Convert Blob to Buffer
         const wordArrayBuffer = await new Response(wordBuffer).arrayBuffer();
@@ -451,7 +451,7 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
         let formData1 = new FormData();
         formData1.append('testPaper', new Blob([pdfBuffer]), 'questionPaper.pdf');
         const response1 = await axios.post(`${process.env.BACKEND_URL}/api/utils/uploads`, formData1);
-        
+
         let formData2 = new FormData();
         formData2.append('testPaper',  new Blob([docxBuffer]), 'questionPaper.docx');
         const response2 = await axios.post(`${process.env.BACKEND_URL}/api/utils/uploads`, formData2);
