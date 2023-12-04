@@ -283,13 +283,16 @@ export const getReportByStudent = catchAsyncError(async (req,res,next) => {
   let skip = (page - 1) * (req.query.perPage ? req.query.perPage : 10);
   let sort = req.query.sort ? {} : { createdAt: -1 };
   let search = req.query.search;
+  let testId = req.query.testId;
 
-  if (search) {
+  if(testId) {
+    query.test = new ObjectId(testId);
+  } else if (search) {
     let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
     const regex = new RegExp(newSearchQuery, "gi");
     query.$or = [
       {
-        "testInfo.name": regex,
+        test: regex,
       },
       {
         student: regex,
@@ -313,19 +316,6 @@ export const getReportByStudent = catchAsyncError(async (req,res,next) => {
   }
 
   let aggregateQuery = [
-    {
-      $lookup: {
-        from: "tests",
-        localField: "test",
-        foreignField: "_id",
-        as: "testInfo"
-      }
-    },
-    {
-      $unwind: {
-        path: "$testInfo"
-      }
-    },
     {
       $match: query,
     },
