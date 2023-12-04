@@ -6,16 +6,14 @@ import ExcelJS from "exceljs";
 import { readFileSync } from "fs";
 
 export const getAllQuestions = catchAsyncError(async (req,res,next) => {
-    let query = {
-        // subject:req.user.subjects,
-      };
+    let query = {};
 
-        // Check if question.subject is one of req.user.subjects
+      // Check if question.subject is one of req.user.subjects
       if (req.user.subjects && req.user.subjects.length > 0) {
         query.subject = { $in: req.user.subjects };
       }
       if (req.user.exams && req.user.exams.length > 0) {
-        query.exams = { $in: req.user.exams };
+        query.exam = { $in: req.user.exams };
       }
 
 
@@ -84,6 +82,7 @@ export const getAllQuestions = catchAsyncError(async (req,res,next) => {
           },
         },
       ];
+      console.log(query);
 
       const questions = await Question.aggregate(aggregateQuery);
       const totalQuestions = questions[0].metadata[0] ? questions[0].metadata[0].total : 0;
