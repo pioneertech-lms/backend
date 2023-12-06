@@ -259,6 +259,10 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
         _test.questions.push(...uniqueQuestions.map(q => q._id));
     }
 
+    if(_test.questions.length < total) {
+      return res.status(501).json({message: "Insufficient questions in database to create test"});
+    }
+
     }
     if(_test.type === "manual"){
         _test.questions = questions;
@@ -362,9 +366,9 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
     const questionsHtml = questions.map((question, i) => `
       <div class="question">
           <p>${i + 1}. ${question.question}</p>
-          <div class="options">
-              ${question.options.map((option, index) => `<label><input type="radio" name="q${i}" value="${index}"> ${option}</label><br>`).join('')}
-          </div>
+          <ol class="options" type="A">
+              ${question.options.map((option, index) => `<li>${option}</li>`).join('')}
+          </ol>
       </div>
   `).join('');
 
@@ -419,7 +423,7 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
             }
 
             .options {
-                margin-left: 30px;
+                margin-left: 10px;
             }
 
             #questions-container {
