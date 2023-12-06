@@ -1,4 +1,4 @@
-import { catchAsyncError } from "../../middleWares/catchAsyncError.js"; 
+import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
 import { Report } from "../../models/Report.js";
 import { Test } from "../../models/Test.js";
 import { Question } from "../../models/Question.js";
@@ -10,13 +10,13 @@ export const getAllReports = catchAsyncError(async (req,res,next) => {
     let query = {
         teacher: new ObjectId(req.params.teacherId)
       };
-    
+
       let limit = parseInt(req.query.perPage) || 10;
       let page = req.query.page ? req.query.page : 1;
       let skip = (page - 1) * (req.query.perPage ? req.query.perPage : 10);
       let sort = req.query.sort ? {} : { createdAt: -1 };
       let search = req.query.search;
-    
+
       if (search) {
         let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
         const regex = new RegExp(newSearchQuery, "gi");
@@ -44,7 +44,7 @@ export const getAllReports = catchAsyncError(async (req,res,next) => {
           },
         ];
       }
-    
+
       let aggregateQuery = [
         {
           $match: query,
@@ -73,9 +73,9 @@ export const getAllReports = catchAsyncError(async (req,res,next) => {
           },
         },
       ];
-    
+
       const reports = await Report.aggregate(aggregateQuery);
-    
+
       res.status(200).json({
         reports: reports[0].data,
         total: reports[0].metadata[0]
@@ -85,7 +85,7 @@ export const getAllReports = catchAsyncError(async (req,res,next) => {
         perPage: limit,
         search: search ? search : "",
       })
-}) 
+})
 
 export const getSingleReport = catchAsyncError(async (req,res,next) => {
   const foundReport = await Report.findById(req.params.id);
@@ -113,7 +113,7 @@ export const addReport = catchAsyncError(async (req,res,next) => {
 
     if (new Date() < testFound.startTime) {
       return res.status(400).json({message:"Test has not yet started."})
-    } 
+    }
     if (new Date() > testFound.endTime) {
       return res.status(400).json({message:"Test has ended or the time is over. Contact admin for details."});
     }
@@ -186,7 +186,7 @@ export const addReport = catchAsyncError(async (req,res,next) => {
     res.status(500).json({ message: "Internal server error" });
   }
 
-}) 
+})
 
 export const getReportByTest = catchAsyncError(async (req,res,next) => {
   let query = {
@@ -267,24 +267,27 @@ export const getReportByTest = catchAsyncError(async (req,res,next) => {
     perPage: limit,
     search: search ? search : "",
   })
-}) 
+})
 
 export const updateReport = catchAsyncError(async (req,res,next) => {
 
-}) 
+})
 
 export const getReportByStudent = catchAsyncError(async (req,res,next) => {
   let query = {
     student: new ObjectId(req.params.studentId)
   };
-  
+
   let limit = parseInt(req.query.perPage) || 10;
   let page = req.query.page ? req.query.page : 1;
   let skip = (page - 1) * (req.query.perPage ? req.query.perPage : 10);
   let sort = req.query.sort ? {} : { createdAt: -1 };
   let search = req.query.search;
-  
-  if (search) {
+  let testId = req.query.testId;
+
+  if(testId) {
+    query.test = new ObjectId(testId);
+  } else if (search) {
     let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
     const regex = new RegExp(newSearchQuery, "gi");
     query.$or = [
@@ -353,7 +356,7 @@ export const getReportByStudent = catchAsyncError(async (req,res,next) => {
     perPage: limit,
     search: search ? search : "",
   })
-}) 
+})
 
 export const getAnalysisReport = catchAsyncError(async (req,res,next) => {
   const {studentId} = req.params;
@@ -371,9 +374,9 @@ export const getAnalysisReport = catchAsyncError(async (req,res,next) => {
   let analysisReport ={};
 
   const subjects = subject ? Array.isArray(subject) ? subject : [subject] : await Report.distinct("subject", {student: new ObjectId(studentId) });
-  
+
   analysisReport.subjects = subjects;
-  
+
   for (const subject of subjects) {
     if (subject && subject !== "") {
       const totalQuestions = await Report.countDocuments({ student: new ObjectId(studentId), subject });

@@ -229,19 +229,27 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
 
       _test.questions = [];
       for (let { topic, noOfQue } of questions) {
+        const baseQuery = {
+          isDeleted: false,
+          creator: req.user._id,
+          topic: topic,
+        };
+        if (req.user.subjects && req.user.subjects.length > 0) {
+          baseQuery.subject = { $in: req.user.subjects };
+        }
+        if (req.user.exams && req.user.exams.length > 0) {
+          baseQuery.exams = { $in: req.user.exams };
+        }
+
         let uniqueQuestions = await Question.find({
-            isDeleted: false,
-            creator: req.user._id,
-            topic: topic,
+            ...baseQuery,
             _id: { $nin: Array.from(usedQuestionIds) }
         }).select('_id').limit(noOfQue);
 
         if (uniqueQuestions.length < noOfQue) {
             let deficit = noOfQue - uniqueQuestions.length;
             let additionalQuestions = await Question.find({
-                isDeleted: false,
-                creator: req.user._id,
-                topic: topic,
+                ...baseQuery,
                 _id: { $nin: Array.from(uniqueQuestions.map(q => q._id)) }
             }).select('_id').limit(deficit);
 
@@ -249,6 +257,10 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
         }
 
         _test.questions.push(...uniqueQuestions.map(q => q._id));
+    }
+
+    if(_test.questions.length < total) {
+      return res.status(501).json({message: "Insufficient questions in database to create test"});
     }
 
     }
@@ -259,6 +271,7 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
 
     }
 
+    console.log(_test);
     const createTest = await Test.create(_test);
 
     if(createTest){
@@ -353,9 +366,9 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
     const questionsHtml = questions.map((question, i) => `
       <div class="question">
           <p>${i + 1}. ${question.question}</p>
-          <div class="options">
-              ${question.options.map((option, index) => `<label><input type="radio" name="q${i}" value="${index}"> ${option}</label><br>`).join('')}
-          </div>
+          <ol class="options" type="A">
+              ${question.options.map((option, index) => `<li>${option}</li>`).join('')}
+          </ol>
       </div>
   `).join('');
 
@@ -368,8 +381,20 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
         <title>Quiz Paper</title>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
         <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
-        <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"
-            onload="renderMathInElement(document.body);"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                renderMathInElement(document.body, {
+                  delimiters: [
+                      {left: '$$', right: '$$', display: true},
+                      {left: '$', right: '$', display: false},
+                      {left: '\\(', right: '\\)', display: false},
+                      {left: '\\[', right: '\\]', display: true}
+                  ],
+                  throwOnError : false
+                });
+            });
+        </script>
         <!-- <link rel="stylesheet" href="styles.css">  -->
         <style>
             body {
@@ -398,7 +423,7 @@ export const generateTest = catchAsyncError(async (req,res,next) => {
             }
 
             .options {
-                margin-left: 30px;
+                margin-left: 10px;
             }
 
             #questions-container {
