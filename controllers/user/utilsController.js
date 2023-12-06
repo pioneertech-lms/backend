@@ -1,6 +1,7 @@
 import { bucketName, s3 } from "../../config/storageObject.js";
 import { ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
+import {Question} from "../../models/Question.js";
 
 export const uploadStatic = catchAsyncError(async (req, res, next) => {
   const files = req.files;
@@ -31,10 +32,10 @@ export const listMaterial = catchAsyncError(async (req, res, next) => {
 
 export const getQueCountByTeacherId = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
-  
+
   // get highest question number for that teacher id
-  const highestQueNo = await Question.findOne({ teacher: id }).sort({ queNo: -1 }); 
-  const queNo = highestQueNo?.queNo ?? 0;
-  
+  const highestQueNo = await Question.findOne({ teacher: id }).sort({ number: -1 });
+  const queNo = highestQueNo?.number ?? 0;
+
   return res.status(200).json({ queNo: queNo + 1 })
 })
