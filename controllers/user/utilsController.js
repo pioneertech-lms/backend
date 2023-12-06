@@ -28,3 +28,13 @@ export const listMaterial = catchAsyncError(async (req, res, next) => {
     return res.status(500).json({ message: "Failed to fetch material" })
   }
 })
+
+export const getQueCountByTeacherId = catchAsyncError(async (req, res, next) => {
+  const { id } = req.params;
+  
+  // get highest question number for that teacher id
+  const highestQueNo = await Question.findOne({ teacher: id }).sort({ queNo: -1 }); 
+  const queNo = highestQueNo?.queNo ?? 0;
+  
+  return res.status(200).json({ queNo: queNo + 1 })
+})
