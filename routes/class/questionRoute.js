@@ -7,6 +7,10 @@ import {
     updateQuestion,
     deleteSingleQuestion,
     addMultipleQuestions,
+    getImpQuestions,
+    addImpQuestion,
+    deleteImpQuestion,
+    checkImpQuestion
 } from "../../controllers/class/questionController.js";
 
 import { checkUserModuleAccess, authorizedUser } from "../../middleWares/accessAuth.js";
@@ -19,14 +23,25 @@ router
   .post(authorizedUser,addSingleQuestion);
 
 router
+    .route("/bulk-add")
+    .post(authorizedUser,upload,addMultipleQuestions);
+
+router
+    .route("/imp")
+    .get(authorizedUser,getImpQuestions)
+    .post(authorizedUser,addImpQuestion)
+    .delete(authorizedUser,deleteImpQuestion)
+
+router
+    .route("/imp/check/:questionId")
+    .get(authorizedUser,checkImpQuestion);
+
+router
     .route("/:id")
     .get(getSingleQuestion)
     .put(updateQuestion)
     .delete(deleteSingleQuestion)
 
-router
-    .route("/bulk-add")
-    .post(authorizedUser,upload,addMultipleQuestions);
 
 
 export default router;

@@ -1,5 +1,6 @@
 import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
 import { Question } from "../../models/Question.js";
+import { ImpQuestion } from "../../models/ImpQuestion.js";
 import axios from 'axios';
 
 import ExcelJS from "exceljs";
@@ -82,7 +83,7 @@ export const getAllQuestions = catchAsyncError(async (req,res,next) => {
           },
         },
       ];
-      console.log(query);
+      // console.log(query);
 
       const questions = await Question.aggregate(aggregateQuery);
       const totalQuestions = questions[0].metadata[0] ? questions[0].metadata[0].total : 0;
@@ -380,4 +381,155 @@ for await (const [row, rowNumber] of rowsData){
   }
 };
 return res.status(200).json(results);
+})
+
+export const getImpQuestions = catchAsyncError(async (req,res,next) => {
+  const student = req.user._id;
+
+  let query = {
+    student
+  };
+
+  let limit = parseInt(req.query.perPage) || 10;
+  let page = parseInt(req.query.page, 10) || 1;
+  let skip = (page - 1) * limit;
+  let sort = req.query.sort ? {} : { number: -1 };
+  let search = req.query.search;
+
+  if (search) {
+    let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+    const regex = new RegExp(newSearchQuery, "gi");
+    query.$or = [
+      {
+        number: regex,
+      },
+      {
+        question: regex,
+      },
+      {
+        options: regex,
+      },
+      {
+        explanation: regex,
+      },
+      {
+        exam: regex,
+      },
+      {
+        yearOfAppearance: regex,
+      },
+      {
+        isCommon:true,
+      }
+    ];
+  }
+
+  // Filter by topics
+  if (req.query.topic) {
+    const topics = Array.isArray(req.query.topic) ? req.query.topic : [req.query.topic];
+    query.topic = { $in: topics };
+  }
+
+  let aggregateQuery = [
+    {
+      $match: query,
+    },
+    {
+      $lookup: {
+        from: 'impquestions',
+        localField: 'questions',
+        foreignField: '_id',
+        as: 'impQuestions',
+      },
+    },
+    {
+      $unwind: {
+        path: '$impQuestions',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $sort: sort,
+    },
+    {
+      $facet: {
+        data: [
+          { $skip: skip },
+          { $limit: limit },
+        ],
+        metadata: [
+          { $count: 'total' },
+        ],
+      },
+    },
+  ];
+  
+  const questions = await ImpQuestion.aggregate(aggregateQuery);
+  const totalQuestions = questions[0].metadata[0] ? questions[0].metadata[0].total : 0;
+  const totalPages = Math.ceil(totalQuestions / limit);
+  
+  res.status(200).json({
+    impQuestions: questions[0].data,
+    total: totalPages,
+    page,
+    perPage: limit,
+    search: search ? search : "",
+  });
+  
+})
+
+export const addImpQuestion = catchAsyncError(async (req,res,next) => {
+  let student = req.user._id;
+  const {questions, questionId} = req.body;
+
+  const impQues = await ImpQuestion.findOne({student});
+
+  if(impQues){
+    if (questions) {
+      impQues.questions.push(...questions);
+    } else if (questionId) {
+      impQues.questions.push(questionId);
+    }
+
+    await impQues.save();
+    return res.status(200).json({message:"Imp question added successfully"});
+  } else {
+    const impQues = await ImpQuestion.create({student,questions: questions ? [...questions] : [questionId]});
+    return res.status(200).json({message:"imp question added successfully"});
+  }
+
+})
+
+export const deleteImpQuestion = catchAsyncError(async (req,res,next) => {
+  const student = req.user._id;
+  const {questions, questionId} = req.body;
+
+  const impQues = await ImpQuestion.findOne({student});
+
+  if(impQues){
+    if (questions) {
+      impQues.questions = impQues.questions.filter(q => !questions.includes(q));
+    } else if (questionId) {
+      impQues.questions.pull(questionId);
+    }
+
+    await impQues.save();
+    return res.status(200).json({message:"imp question removed successfully"});
+  } else {
+    return res.status(404).json({message:"No imp questions found"});
+  }
+})
+
+export const checkImpQuestion = catchAsyncError(async (req,res,next) => {
+  const student = req.user._id;
+  const {questionId} = req.params;
+
+  const impQues = await ImpQuestion.findOne({student});
+
+  if(impQues){
+    const isQuestionFound = impQues.questions.includes(questionId);
+    return res.status(200).json({message: isQuestionFound ? "Imp question found" : "Imp question not found", isQuestionFound});
+  } else {
+    return res.status(404).json({isQuestionFound:false,message:"No imp questions found"});
+  }
 })
