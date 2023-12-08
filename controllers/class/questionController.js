@@ -5,6 +5,9 @@ import axios from 'axios';
 
 import ExcelJS from "exceljs";
 import { readFileSync } from "fs";
+import mongoose from "mongoose";
+
+const ObjectId = mongoose.Types.ObjectId;
 
 export const getAllQuestions = catchAsyncError(async (req,res,next) => {
     let query = {};
@@ -176,11 +179,16 @@ export const addSingleQuestion = catchAsyncError(async (req,res,next) => {
 
 export const getSingleQuestion = catchAsyncError(async (req,res,next) => {
     const {id} = req.params;
+    let isImp;
 
-    const question = await Question.findById(id);
+    let question = await Question.findById(id);
 
     if(question){
-        return res.status(200).json(question)
+      if(req.user.role === "student") {
+        question = question.toObject();
+        question.imp = Boolean(await ImpQuestion.count({ student: req.user._id, questions: { $in: [new ObjectId(id)] } }));
+      }
+      return res.status(200).json(question);
     }else {
         return res.status(404).json({message:"question not found"});
     }
@@ -383,122 +391,108 @@ for await (const [row, rowNumber] of rowsData){
 return res.status(200).json(results);
 })
 
-export const getImpQuestions = catchAsyncError(async (req,res,next) => {
+export const getImpQuestions = catchAsyncError(async (req, res, next) => {
   const student = req.user._id;
-
-  let query = {
-    student
-  };
 
   let limit = parseInt(req.query.perPage) || 10;
   let page = parseInt(req.query.page, 10) || 1;
   let skip = (page - 1) * limit;
-  let sort = req.query.sort ? {} : { number: -1 };
-  let search = req.query.search;
+  let sort = req.query.sort ? req.query.sort : { number: -1 };
 
-  if (search) {
-    let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+  // Fetching impQuestions for the student
+  const impQues = await ImpQuestion.findOne({ student });
+  if (!impQues) {
+    return res.status(404).json({ message: "No important questions found for this student." });
+  }
+
+  let questionIds = impQues.questions;
+
+  // Constructing query for actual questions
+  let questionQuery = { _id: { $in: questionIds } };
+
+  // Apply search filter if present
+  if (req.query.search) {
+    let newSearchQuery = req.query.search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
     const regex = new RegExp(newSearchQuery, "gi");
-    query.$or = [
-      {
-        number: regex,
-      },
-      {
-        question: regex,
-      },
-      {
-        options: regex,
-      },
-      {
-        explanation: regex,
-      },
-      {
-        exam: regex,
-      },
-      {
-        yearOfAppearance: regex,
-      },
-      {
-        isCommon:true,
-      }
+    questionQuery.$or = [
+      { number: regex },
+      { question: regex },
+      { options: regex },
+      { explanation: regex },
+      { exam: regex },
+      { yearOfAppearance: regex },
+      { isCommon: true }
     ];
   }
 
-  // Filter by topics
+  // Apply topic filter if present
   if (req.query.topic) {
     const topics = Array.isArray(req.query.topic) ? req.query.topic : [req.query.topic];
-    query.topic = { $in: topics };
+    questionQuery.topic = { $in: topics };
   }
 
   let aggregateQuery = [
     {
-      $match: query,
+      $match: questionQuery
     },
     {
-      $lookup: {
-        from: 'impquestions',
-        localField: 'questions',
-        foreignField: '_id',
-        as: 'impQuestions',
-      },
+      $sort: sort
     },
     {
-      $unwind: {
-        path: '$impQuestions',
-        preserveNullAndEmptyArrays: true,
-      },
+      $skip: skip
     },
     {
-      $sort: sort,
-    },
-    {
-      $facet: {
-        data: [
-          { $skip: skip },
-          { $limit: limit },
-        ],
-        metadata: [
-          { $count: 'total' },
-        ],
-      },
-    },
+      $limit: limit
+    }
   ];
-  
-  const questions = await ImpQuestion.aggregate(aggregateQuery);
-  const totalQuestions = questions[0].metadata[0] ? questions[0].metadata[0].total : 0;
-  const totalPages = Math.ceil(totalQuestions / limit);
-  
+
+  const questions = await Question.aggregate(aggregateQuery);
+  const totalQuestions = await Question.countDocuments(questionQuery);
+
   res.status(200).json({
-    impQuestions: questions[0].data,
-    total: totalPages,
+    questions,
+    total: totalQuestions,
     page,
     perPage: limit,
-    search: search ? search : "",
+    search: req.query.search ? req.query.search : ""
   });
-  
-})
+});
 
-export const addImpQuestion = catchAsyncError(async (req,res,next) => {
+export const addImpQuestion = catchAsyncError(async (req, res, next) => {
   let student = req.user._id;
-  const {questions, questionId} = req.body;
+  const { questions, questionId } = req.body;
 
-  const impQues = await ImpQuestion.findOne({student});
+  const impQues = await ImpQuestion.findOne({ student });
 
-  if(impQues){
+  if (impQues) {
+    // A new array to store unique questions
+    let newQuestions = [];
+
     if (questions) {
-      impQues.questions.push(...questions);
-    } else if (questionId) {
-      impQues.questions.push(questionId);
+      // Filter out questions that already exist in impQues.questions
+      newQuestions = questions.filter(q => !impQues.questions.includes(q));
+    } else if (questionId && !impQues.questions.includes(questionId)) {
+      // Add questionId if it's not already in the list
+      newQuestions.push(questionId);
     }
 
-    await impQues.save();
-    return res.status(200).json({message:"Imp question added successfully"});
+    // If there are new unique questions, add them to the database
+    if (newQuestions.length > 0) {
+      impQues.questions.push(...newQuestions);
+      await impQues.save();
+      return res.status(200).json({ message: "Imp question added successfully" });
+    } else {
+      return res.status(200).json({ message: "No new questions to add" });
+    }
   } else {
-    const impQues = await ImpQuestion.create({student,questions: questions ? [...questions] : [questionId]});
-    return res.status(200).json({message:"imp question added successfully"});
+    // Create a new ImpQuestion with either a list of questions or a single questionId
+    const impQues = await ImpQuestion.create({
+      student,
+      questions: questions ? [...new Set(questions)] : [questionId]
+    });
+    return res.status(200).json({ message: "Imp question added successfully" });
   }
-
-})
+});
 
 export const deleteImpQuestion = catchAsyncError(async (req,res,next) => {
   const student = req.user._id;

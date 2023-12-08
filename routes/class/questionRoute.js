@@ -38,9 +38,9 @@ router
 
 router
     .route("/:id")
-    .get(getSingleQuestion)
-    .put(updateQuestion)
-    .delete(deleteSingleQuestion)
+    .get(authorizedUser, getSingleQuestion)
+    .put(authorizedUser, updateQuestion)
+    .delete(authorizedUser, deleteSingleQuestion)
 
 
 

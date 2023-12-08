@@ -8,7 +8,7 @@ const schema = new mongoose.Schema(
     },
     type:{
         type:String,
-        enum:["random","live","manual"],
+        enum:["random","live","manual","mock"],
         required:true
     },
     subjects:[
@@ -49,4 +49,4 @@ const schema = new mongoose.Schema(
   }
 );
 
-export const Test = mongoose.model("test",schema); 
+export const Test = mongoose.model("test",schema);

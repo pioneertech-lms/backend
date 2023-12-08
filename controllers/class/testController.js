@@ -89,7 +89,10 @@ export const getAllTeacherTests = catchAsyncError(async (req,res,next) => {
 
 export const getAllStudentTests = catchAsyncError(async (req,res,next) => {
     let query = {
-        creator: req.user.createdBy ?? req.user._id,
+      $or: [
+        { creator: req.user.createdBy },
+        { creator: req.user._id },
+      ]
     };
 
     if(req.query.isDeleted=== "true"){
@@ -105,7 +108,7 @@ export const getAllStudentTests = catchAsyncError(async (req,res,next) => {
     if (search) {
         let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
         const regex = new RegExp(newSearchQuery, "gi");
-        query.$or = [
+        query.$or.concat([
             {
                 name: regex,
             },
@@ -121,7 +124,7 @@ export const getAllStudentTests = catchAsyncError(async (req,res,next) => {
             {
                 questions: regex,
             },
-        ];
+        ]);
     }
 
     let aggregateQuery = [
@@ -206,7 +209,7 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
      _test.endTime= new Date(endTime);
     }
 
-    if(_test.type === "random"){
+    if(_test.type === "random" || _test.type === "mock"){
 
       const {questions,total} = req.body;
 
@@ -215,7 +218,10 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
       }
 
       // get last 5 random tests
-      const previousTests = await Test.find({ creator: req.user._id, type: 'random' })
+      const previousTests = await Test.find({
+          creator: _test.type === "random" ? req.user._id: req.user.createdBy,
+          type: {$in: ['random', 'mock']}
+        })
         .sort({ createdAt: -1 })
         .limit(5)
         .select('questions -_id')
@@ -230,30 +236,34 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
       _test.questions = [];
       for (let { topic, noOfQue } of questions) {
         const baseQuery = {
-          isDeleted: false,
-          creator: req.user._id,
           topic: topic,
+          $or: [
+            { isCommon: true },
+            { isCommon: false }
+          ],
+          creator: _test.type === "random" ? req.user._id : req.user.createdBy
         };
+
         if (req.user.subjects && req.user.subjects.length > 0) {
           baseQuery.subject = { $in: req.user.subjects };
         }
         if (req.user.exams && req.user.exams.length > 0) {
-          baseQuery.exams = { $in: req.user.exams };
+          baseQuery.exam = { $in: req.user.exams };
         }
 
         let uniqueQuestions = await Question.find({
-            ...baseQuery,
-            _id: { $nin: Array.from(usedQuestionIds) }
+          ...baseQuery,
+          _id: { $nin: Array.from(usedQuestionIds) }
         }).select('_id').limit(noOfQue);
 
         if (uniqueQuestions.length < noOfQue) {
-            let deficit = noOfQue - uniqueQuestions.length;
-            let additionalQuestions = await Question.find({
-                ...baseQuery,
-                _id: { $nin: Array.from(uniqueQuestions.map(q => q._id)) }
-            }).select('_id').limit(deficit);
+          let deficit = noOfQue - uniqueQuestions.length;
+          let additionalQuestions = await Question.find({
+            ...baseQuery,
+            _id: { $nin: Array.from(uniqueQuestions.map(q => q._id)) }
+          }).select('_id').limit(deficit);
 
-            uniqueQuestions = uniqueQuestions.concat(additionalQuestions);
+          uniqueQuestions = uniqueQuestions.concat(additionalQuestions);
         }
 
         _test.questions.push(...uniqueQuestions.map(q => q._id));
