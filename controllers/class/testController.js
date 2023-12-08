@@ -239,9 +239,11 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
           topic: topic,
           $or: [
             { isCommon: true },
-            { isCommon: false }
+            { isCommon: false },
+            {
+              creator: _test.type === "random" ? req.user._id : req.user.createdBy
+            }
           ],
-          creator: _test.type === "random" ? req.user._id : req.user.createdBy
         };
 
         if (req.user.subjects && req.user.subjects.length > 0) {
