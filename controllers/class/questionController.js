@@ -279,116 +279,174 @@ export const addMultipleQuestions = catchAsyncError(async (req,res,next) => {
   const url =process.env.BACKEND_URL +'/assets/'+ req.files.questionSet[0].key;
   const response = await axios.get(url, { responseType: 'arraybuffer' });
 
+  // example https://drive.google.com/u/0/open?usp=forms_web&id=1yEPGyBkpnUiisXQ3JxBmtnYAncKdBcpJ
+  const gdriveRegex = /https:\/\/drive\.google\.com\/u\/0\/open\?usp=forms_web&id=[a-zA-Z0-9_-]{10,}/g;
+
+  const replaceGdriveLink = async (text) => {
+    if(!text) return;
+    let string = text.toString();
+
+    if (string.match(gdriveRegex)) {
+      const gdriveLink = string.match(gdriveRegex)[0];
+      const fileId = gdriveLink.split("=")[2];
+      const gdriveResponse = await axios.get(
+        `https://drive.google.com/uc?export=download&id=${fileId}`,
+        { responseType: "arraybuffer" }
+      );
+      const fileBuffer = Buffer.from(gdriveResponse.data, "binary");
+
+      const formData = new FormData();
+      formData.append("questionImg", new Blob([fileBuffer]), "questionImg.jpg");
+      const response = await axios.post(
+        `${process.env.BACKEND_URL}/api/utils/uploads`,
+        formData
+      );
+      let imgPath = response.data.assets[0];
+      const dataUrl = `<img src='${imgPath}' />`;
+      string = string.replace(gdriveLink, dataUrl);
+    }
+    // console.log("string", string)
+    return string;
+  };
+
   // Get the buffer containing the file data
   const fileBuffer = Buffer.from(response.data, 'binary');
 
-const workbook = new ExcelJS.Workbook();
-await workbook.xlsx.load(fileBuffer);
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(fileBuffer);
 
-const worksheet = workbook.worksheets[0];
+  const worksheet = workbook.worksheets[0];
 
-if (worksheet.rowCount === 0) {
-  console.error("excel sheet is empty");
+  if (worksheet.rowCount === 0) {
+    console.error("excel sheet is empty");
     return res.status(502).json({ message: "excel sheet is empty" });
-}
+  }
 
-let results = {
-  unsavedQues: [],
-  message: "questions added successfully",
-};
-
-const rowsData = [];
-worksheet.eachRow((row, rowNumber) => rowsData.push([row, rowNumber]));
-
-for await (const [row, rowNumber] of rowsData){
-  // console.log("Row " + rowNumber + " = " + JSON.stringify(row.values));
-
-  let _question = {};
-
-  // Check for empty cells before processing
-  _question.number = row.getCell(1).value || null; // Column 1: number
-  _question.question = row.getCell(2).value || null; // Column 2: question
-
-  let _options = [];
-  if (row.getCell(4).value) _options.push(row.getCell(4).value); // Column 4: optionOne
-  if (row.getCell(6).value) _options.push(row.getCell(6).value); // Column 6: optionTwo
-  if (row.getCell(8).value) _options.push(row.getCell(8).value); // Column 8: optionThree
-  if (row.getCell(10).value) _options.push(row.getCell(10).value); // Column 10: optionFour
-  _question.options = _options;
-
-  _question.answer = row.getCell(12).value || null; // Column 12: answer
-  _question.explanation = row.getCell(13).value || null; // Column 13: explanation
-  _question.topic = row.getCell(15).value || null; // Column 15: topic
-  _question.yearOfAppearance = row.getCell(16).value || null; // Column 16: yearOfAppearance
-  _question.exam = row.getCell(17).value || null; // Column 17: exam
-  _question.marks = row.getCell(18).value || null; // Column 18: marks
-  _question.subject = row.getCell(19).value || null; // Column 18: subject
-  _question.creator = req.user._id;
-
-  const images = worksheet.getImages();
-  for await (const img of images) {
-    const imgRow = Math.floor(img.range.tl.row);
-    const imgCol = Math.floor(img.range.tl.col);
-    const imageBuf = workbook.getImage(img.imageId);
-
-    if (imgRow === rowNumber - 1 && [2, 4, 6, 8, 10, 13].includes(imgCol)) {
-      // Upload the files to S3
-      const formData = new FormData();
-      formData.append('questionImg', new Blob([imageBuf.buffer]), 'questionImg.jpg');
-
-      const response = await axios.post(`${process.env.BACKEND_URL}/api/utils/uploads`, formData);
-
-      let imgPath = response.data.assets[0];
-      // console.log(imgPath)
-      const dataUrl = `<img src='${imgPath}' />`;
-
-      // const dataUrl = `<img src='data:image/${imageBuf.extension};base64,${imageBuf.buffer.toString('base64')}'></img> `;
-      switch (imgCol) {
-        case 2: // questionImage
-          _question.question = _question.question ?? "" + dataUrl;
-          break;
-        case 4: // optionOneImage
-          _question.options[0] =_question.options[0] ?? "" + dataUrl;
-          break;
-        case 6: // optionTwoImage
-        _question.options[1] =_question.options[1] ?? "" + dataUrl;
-          break;
-        case 8: // optionThreeImage
-        _question.options[2] =_question.options[2] ?? "" + dataUrl;
-          break;
-        case 10: // optionFourImage
-        _question.options[3] =_question.options[3] ?? "" + dataUrl;
-          break;
-        case 13: // Column 14: explanationImage
-          _question.explanation = _question.explanation ?? "" + dataUrl;
-          break;
-        default:
-          break;
-      }
-    }
+  let results = {
+    unsavedQues: [],
+    message: "questions added successfully",
   };
 
-  if(_question.number==="number" || !_question.number){
-    continue;
-  }else {
-    // const que = await Question.create(_question);
-    // console.log(que);
-    // try {
-    // } catch (error) {
-    //   results.error = error._message;
-    //   results.unsavedQues.push(row.values);
-    // }
-  }
+  const rowsData = [];
+  worksheet.eachRow((row, rowNumber) => rowsData.push([row, rowNumber]));
 
-  try {
-    const que = await Question.create(_question);
-  } catch (error) {
-    results.unsavedQues.push({
-      [_question.number]: error.message || 'Duplicate question number for the user'
-    });
-  }
-};
-return res.status(200).json(results);
+  for await (const [row, rowNumber] of rowsData){
+    // console.log("Row " + rowNumber + " = " + JSON.stringify(row.values));
+
+    let _question = {};
+
+    // Check for empty cells before processing
+    _question.number = row.getCell(1).value || null; // Column 1: number
+    _question.question = row.getCell(2).value || null; // Column 2: question
+
+    let _options = [];
+    if (row.getCell(4).value) _options.push(row.getCell(4).value); // Column 4: optionOne
+    if (row.getCell(6).value) _options.push(row.getCell(6).value); // Column 6: optionTwo
+    if (row.getCell(8).value) _options.push(row.getCell(8).value); // Column 8: optionThree
+    if (row.getCell(10).value) _options.push(row.getCell(10).value); // Column 10: optionFour
+    _question.options = _options;
+
+    _question.answer = row.getCell(12).value || null; // Column 12: answer
+    _question.explanation = row.getCell(13).value || null; // Column 13: explanation
+    _question.topic = row.getCell(15).value || null; // Column 15: topic
+    _question.yearOfAppearance = row.getCell(16).value || null; // Column 16: yearOfAppearance
+    _question.exam = row.getCell(17).value || null; // Column 17: exam
+    _question.marks = row.getCell(18).value || null; // Column 18: marks
+    _question.subject = row.getCell(19).value || null; // Column 18: subject
+    _question.creator = req.user._id;
+
+    const images = worksheet.getImages();
+    for await (const img of images) {
+      const imgRow = Math.floor(img.range.tl.row);
+      const imgCol = Math.floor(img.range.tl.col);
+      const imageBuf = workbook.getImage(img.imageId);
+
+      if (imgRow === rowNumber - 1 && [2, 4, 6, 8, 10, 13].includes(imgCol)) {
+        // Upload the files to S3
+        const formData = new FormData();
+        formData.append('questionImg', new Blob([imageBuf.buffer]), 'questionImg.jpg');
+
+        const response = await axios.post(`${process.env.BACKEND_URL}/api/utils/uploads`, formData);
+
+        let imgPath = response.data.assets[0];
+        // console.log(imgPath)
+        const dataUrl = `<img src='${imgPath}' />`;
+
+        // const dataUrl = `<img src='data:image/${imageBuf.extension};base64,${imageBuf.buffer.toString('base64')}'></img> `;
+        switch (imgCol) {
+          case 2: // questionImage
+            _question.question = _question.question ?? "" + dataUrl;
+            break;
+          case 4: // optionOneImage
+            _question.options[0] =_question.options[0] ?? "" + dataUrl;
+            break;
+          case 6: // optionTwoImage
+            _question.options[1] =_question.options[1] ?? "" + dataUrl;
+            break;
+          case 8: // optionThreeImage
+            _question.options[2] =_question.options[2] ?? "" + dataUrl;
+            break;
+          case 10: // optionFourImage
+            _question.options[3] =_question.options[3] ?? "" + dataUrl;
+            break;
+          case 13: // Column 14: explanationImage
+            _question.explanation = _question.explanation ?? "" + dataUrl;
+            break;
+          default:
+            break;
+        }
+      }
+    };
+
+    if(_question.number==="number" || !_question.number){
+      continue;
+    }else {
+      let questionImg = "";
+      let optionOneImg = "";
+      let optionTwoImg = "";
+      let optionThreeImg = "";
+      let optionFourImg = "";
+      let explanationImg = "";
+
+      if(row.getCell(3).value !== null){
+        questionImg = await replaceGdriveLink(row.getCell(3).value);
+      }
+      if(row.getCell(5).value !== null){
+        optionOneImg = await replaceGdriveLink(row.getCell(5).value);
+      }
+      if(row.getCell(7).value !== null){
+        optionTwoImg = await replaceGdriveLink(row.getCell(7).value);
+      }
+      if(row.getCell(9).value !== null){
+        optionThreeImg = await replaceGdriveLink(row.getCell(9).value);
+      }
+      if(row.getCell(11).value !== null){
+        optionFourImg = await replaceGdriveLink(row.getCell(11).value);
+      }
+      if(row.getCell(14).value !== null){
+        explanationImg = await replaceGdriveLink(row.getCell(14).value);
+      }
+      
+      _question.question = _question.question + questionImg;
+      _question.options[0] = _question.options[0] + optionOneImg;
+      _question.options[1] = _question.options[1] + optionTwoImg;
+      _question.options[2] = _question.options[2] + optionThreeImg;
+      _question.options[3] = _question.options[3] + optionFourImg;
+      _question.explanation = _question.explanation + explanationImg;
+
+    }
+
+
+    
+    try {
+      const que = await Question.create(_question);
+    } catch (error) {
+      results.unsavedQues.push({
+        [_question.number]: error.message || 'Duplicate question number for the user'
+      });
+    }
+  };
+  return res.status(200).json(results);
 })
 
 export const getImpQuestions = catchAsyncError(async (req, res, next) => {
