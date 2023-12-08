@@ -287,7 +287,7 @@ export const  createTest = catchAsyncError(async (req,res,next) => {
     const createTest = await Test.create(_test);
 
     if(createTest){
-        return res.status(200).json({message:"test created successfully"});
+        return res.status(200).json({message:"test created successfully", id: createTest._id});
     } else {
         return res.status(501).json({message:"error creating test"});
     }
