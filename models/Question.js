@@ -59,6 +59,13 @@ const schema = new mongoose.Schema(
 );
 
 schema.pre('save', async function (next) {
+  if(this.subject){
+    this.subject = this.subject.toLowerCase();
+  }
+  if(this.exam){
+    this.exam = this.exam.toLowerCase();
+  }
+
   if(!this.isNew){
     next();
   }
