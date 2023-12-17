@@ -121,7 +121,6 @@ const schema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    isLoggedIn: { type: Boolean, default: false },
     resetPasswordToken: String,
     resetPasswordExpire: String,
   },

@@ -40,19 +40,19 @@ export const loginUser = catchAsyncError(async (req, res, next) => {
     // return next(new ErrorHandler("Invalid login credentials", 401));
   }
 
-  if(user.role == "admin" || !user.isLoggedIn){
-    user.isLoggedIn = true;
-    await user.save();
-  }else {
-    return res.status(401).json({message:"User already logged in from another device"})
-  }
+  // if(user.role == "admin" || !user.isLoggedIn){
+  //   user.isLoggedIn = true;
+  //   await user.save();
+  // }else {
+  //   return res.status(401).json({message:"User already logged in from another device"})
+  // }
 
   sendToken(user, 200, res);
 });
 
 // Logout
 export const logoutUser = catchAsyncError(async (req, res, next) => {
-  await User.updateOne({ _id: req.user._id }, { $set: { isLoggedIn: false } });
+  // await User.updateOne({ _id: req.user._id }, { $set: { isLoggedIn: false } });
   req.logout((err) => {
     if(err) throw error;
     res.status(200).json({ message: "Logout successful" });

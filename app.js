@@ -68,6 +68,15 @@ app.use("/api", express.urlencoded({ extended: true }));
 app.use(express.static(__dirname + "/public"));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 app.use(methodOverride("_method"));
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser((id, done) => {
+  User.findById(id, (err, user) => {
+    done(err, user);
+  });
+});
 app.use(passport.initialize());
 app.use(passport.session())
 app.use(flash());
@@ -81,8 +90,6 @@ app.use(function (req, res, next) {
       ? req.user.username
       : req.user.createdBy.username
     : null;
-  res.locals.error = req.flash("error");
-  res.locals.success = req.flash("success");
   next();
 });
 
