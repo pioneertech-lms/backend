@@ -1,7 +1,6 @@
-import cron from 'node-cron';
-import { exec }from  'child_process';
+import { exec } from 'child_process';
 
-cron.schedule('5 0 * * *', () => {
+export function backupMongo() {
   const backupDir = '../public/backup/';
 
   const timestamp = new Date().toISOString().replace(/:/g, '-');
@@ -28,4 +27,4 @@ cron.schedule('5 0 * * *', () => {
       console.log('Database restore to MongoDB Atlas completed.');
     });
   });
-});
+}

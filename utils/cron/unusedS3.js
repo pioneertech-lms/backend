@@ -1,15 +1,12 @@
-// import { bucketName } from "../config/storageObject.js"
-// import { DeleteObjectCommand, DeleteObjectsCommand, ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
+// import { bucketName } from "../../config/storageObject.js"
+// import { DeleteObjectsCommand, ListObjectsV2Command, S3Client } from "@aws-sdk/client-s3";
 // import mongoose from "mongoose";
-// import { Question } from "../models/Question.js";
+// import { Question } from "../../models/Question.js";
 
-// import { dirname, join } from 'path';
+// import { dirname } from 'path';
 // import { fileURLToPath } from 'url';
 
 // const __dirname = dirname(fileURLToPath(import.meta.url));
-
-// import { config } from 'dotenv';
-// config({ path: "./config/config.env" });
 
 // // // connect mongo
 // try {
@@ -98,7 +95,7 @@
 //     }
 // }
 
-// async function cleanupS3Bucket() {
+// export async function cleanupS3Bucket() {
 //     let continuationToken;
 //     let objectsToDelete = [];
 //     const maxBatchSize = 1000;
@@ -133,10 +130,6 @@
 //     }
 // }
 
-// await (cleanupS3Bucket()
-//     .then(() => console.log("Cleanup completed."))
-//     .catch(error => console.error("Cleanup failed:", error)));
-
-console.log("working")
-
-process.exit(0)
+export async function cleanupS3Bucket() {
+    console.log("Not cleaning up s3 buckets yet");
+}
