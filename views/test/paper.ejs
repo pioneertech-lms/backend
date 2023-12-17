@@ -1,0 +1,149 @@
+<!-- prettier-ignore -->
+<%_
+    const groupedQuestions = {
+        physics: test.questions.filter(q => q.subject === "physics"),
+        chemistry: test.questions.filter(q => q.subject === "chemistry"),
+        mathematics: test.questions.filter(q => q.subject === "mathematics"),
+        biology: test.questions.filter(q => q.subject === "biology"),
+    };
+
+    const marks = test.questions.reduce((acc, curr) => acc + curr.marks, 0);
+_%>
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Quiz Paper</title>
+		<link
+			rel="stylesheet"
+			href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+			integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV"
+			crossorigin="anonymous"
+		/>
+		<script
+			defer
+			src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
+			integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8"
+			crossorigin="anonymous"
+		></script>
+		<script
+			defer
+			src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+			integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
+			crossorigin="anonymous"
+		></script>
+		<script>
+			document.addEventListener("DOMContentLoaded", function () {
+				renderMathInElement(document.body, {
+					delimiters: [
+						{ left: "$$", right: "$$", display: true },
+						{ left: "$", right: "$", display: false },
+						{ left: "\\(", right: "\\)", display: false },
+						{ left: "\\[", right: "\\]", display: true },
+					],
+					throwOnError: false,
+				});
+			});
+		</script>
+		<style>
+			@counter-style paren-lower-alpha {
+				system: extends lower-alpha;
+				prefix: "(";
+				suffix: ") ";
+			}
+			body {
+				font-family: Arial, sans-serif;
+				margin: 1rem;
+				padding: 0;
+			}
+			.header {
+				display: grid;
+				grid-template-rows: 1;
+				grid-template-columns: 0.25fr 0.5fr 0.25fr;
+				gap: 1rem;
+				align-items: center;
+				padding: 1rem;
+			}
+			.watermark {
+                mso-visibility: none;
+				position: fixed;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%);
+				opacity: 0.2;
+				user-select: none;
+			}
+
+			.options {
+				display: grid;
+				grid-template-columns: repeat(2, 1fr);
+				grid-template-rows: repeat(2, 1fr);
+			}
+			.options li::marker,
+			.questions li::marker {
+				font-weight: bold;
+			}
+			.questions > li {
+				margin: 1rem 0;
+			}
+			.options li {
+				list-style: paren-lower-alpha;
+			}
+			.options li img, .questions > li img {
+				display: block;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="watermark">
+			<img
+				id="watermark"
+				src="<%= test.creator.watermarkImg %>"
+				alt="watermark"
+				height="256"
+			/>
+		</div>
+		<div class="header">
+			<img
+				class="logo"
+				src="<%= test.creator.logoImg %>"
+				alt="Logo"
+				height="64"
+			/>
+			<div align="center">
+				<h1><u><%= test.creator.className %></u></h1>
+				<p>Exam name: <span><%= test.name %></span></p>
+			</div>
+			<div class="metadata">
+				<div><b>Date: </b><span><%= date %></span></div>
+				<div><b>Duration: </b><span><%= duration %> minutes</span></div>
+				<div><b>Marks: </b><span><%= marks %></span></div>
+			</div>
+		</div>
+
+		<hr />
+		<div>
+			<ol class="questions">
+				<% Object.entries(groupedQuestions).forEach(function ([subject,
+				questions]) { %> <% if(questions.length) { %>
+				<p style="color: gray; text-align: center">
+					<%= subject.toUpperCase() %>
+				</p>
+				<% questions.forEach(function(question){ %>
+				<li class="question">
+					<div><%- question.question %></div>
+					<ol class="options" type="a">
+						<% question.options.forEach(function (option){ %>
+						<li><%- option %></li>
+						<%})%>
+					</ol>
+				</li>
+				<%}) %><% } %> <%}) %>
+			</ol>
+		</div>
+
+		<hr />
+	</body>
+</html>
