@@ -3,6 +3,7 @@ import slugify from "slugify";
 import ErrorHandler from "../../utils/ErrorHandler.js";
 import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
 import { User } from "../../models/User.js";
+import { Session } from "../../models/Session.js";
 import { sendToken } from "../../utils/sendToken.js";
 import { error } from "console";
 
@@ -11,50 +12,55 @@ export const loginUser = catchAsyncError(async (req, res, next) => {
   const { username, password, role } = req.body;
 
   const user = await User.findOne({
-    $or: [{ phone: username }, { email: username }, {username:username}],
+    $or: [{ phone: username }, { email: username }, { username: username }],
     isDeleted: false,
     isActive: true,
     status: true,
   }).select("+password");
 
   if (!user) {
-    return res.status(401).json({message:"Account with this credentials doesn't exist"})
-    // return next(
-    //   new ErrorHandler("Account with this credentials doesn't exist.", 401)
-    // );
+    return res.status(401).json({ message: "Account with this credentials doesn't exist" });
   }
 
   if (user.status === false) {
-    return res.status(403).json({message:"Your account is deactivate. Please contact admin to retrieve your account."})
-    // return next(
-    //   new ErrorHandler(
-    //     "Your account is deactivate. Please contact admin to retrieve your account.",
-    //     403
-    //   )
-    // );
+    return res.status(403).json({ message: "Your account is deactivated. Please contact admin to retrieve your account." });
   }
 
   let isMatch = await user.comparePassword(password);
   if (!isMatch) {
-    return res.status(401).json({message:"Invalid login credentials"})
-    // return next(new ErrorHandler("Invalid login credentials", 401));
+    return res.status(401).json({ message: "Invalid login credentials" });
   }
 
-  // if(user.role == "admin" || !user.isLoggedIn){
-  //   user.isLoggedIn = true;
-  //   await user.save();
-  // }else {
-  //   return res.status(401).json({message:"User already logged in from another device"})
-  // }
+  // Check if the user is already logged in from another device
+  if (user.currentSessionId) {
+    // Invalidate the old session
+    await Session.findOneAndDelete({ sessionId: user.currentSessionId });
+  }
 
-  sendToken(user, 200, res);
+  // Create a new session
+  const newSession = new Session({ userId: user._id });
+  console.log("newSession", newSession)
+  await newSession.save();
+
+  // Update the current session ID in the user model
+  user.currentSessionId = newSession.sessionId;
+  await user.save();
+
+  
+  sendToken(user, newSession.sessionId, 200, res);
 });
 
 // Logout
 export const logoutUser = catchAsyncError(async (req, res, next) => {
-  // await User.updateOne({ _id: req.user._id }, { $set: { isLoggedIn: false } });
+  // Delete the current session
+  await Session.findOneAndDelete({ sessionId: req.user.currentSessionId });
+
+  // Clear the current session ID in the user model
+  req.user.currentSessionId = null;
+  await req.user.save();
+
   req.logout((err) => {
-    if(err) throw error;
+    if (err) throw err;
     res.status(200).json({ message: "Logout successful" });
   });
 });
@@ -180,7 +186,8 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
 
   user = await User.create(_user);
 
-  sendToken(user, 200, res);
+  return res.status(200).json({message:"User created successfully",user});
+  // sendToken(user, 200, res);
 })
 
 // change password

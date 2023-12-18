@@ -96,6 +96,10 @@ const schema = new mongoose.Schema(
         enum:["cet","jee","neet"]
       },
     ],
+    currentSessionId: {
+      type: String,
+      default: null,
+    },
     modules: [
       {
         type: String,
@@ -137,10 +141,12 @@ schema.methods.comparePassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
-schema.methods.getJWTToken = function () {
-  return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE,
-  });
+schema.methods.getJWTToken = function (sessionId) {
+  return jwt.sign(
+    { id: this._id, sessionId: sessionId },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRE }
+  );
 };
 
 schema.methods.getResetToken = async function () {

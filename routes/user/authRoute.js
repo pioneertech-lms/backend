@@ -20,6 +20,15 @@ router
   .post(authorizedUser, logoutUser);
 
 router
+  .route("/test")
+  .get(authorizedUser, (req, res) => {
+    res.json(req.user);
+  })
+  .post(authorizedUser, (req, res) => {
+    res.json(req.user);
+  })
+
+router
   .route("/register")
   .post(authorizedUser,upload, registerUser)
 
