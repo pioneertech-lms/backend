@@ -33,8 +33,13 @@ export const loginUser = catchAsyncError(async (req, res, next) => {
 
   // Check if the user is already logged in from another device
   if (user.currentSessionId) {
-    // Invalidate the old session
-    await Session.findOneAndDelete({ sessionId: user.currentSessionId });
+    const currentSession = await Session.findOne({ sessionId: user.currentSessionId });
+    if(currentSession) {
+      // Invalidate the old session
+      await Session.findOneAndDelete({ sessionId: user.currentSessionId });
+      // Prompt user to login again
+      return res.status(401).json({ message: "Login from another device detected. Login again." });
+    }
   }
 
   // Create a new session
@@ -46,7 +51,7 @@ export const loginUser = catchAsyncError(async (req, res, next) => {
   user.currentSessionId = newSession.sessionId;
   await user.save();
 
-  
+
   sendToken(user, newSession.sessionId, 200, res);
 });
 
