@@ -211,14 +211,12 @@ export const createTest = catchAsyncError(async (req, res, next) => {
   }
 
   if (_test.type === "random" || _test.type === "mock") {
-
-    const { questions, total } = req.body;
-
-    if (!questions || !total) {
-      return res.status(500).json({ message: "pass questions and total!" });
+    const { topics, totalQues } = req.body;
+  
+    if (!topics || !totalQues || Object.keys(totalQues).length === 0) {
+      return res.status(500).json({ message: "Pass valid topics and totalQues!" });
     }
-
-    // get last 5 random tests
+  
     const previousTests = await Test.find({
       creator: _test.type === "random" ? req.user._id : req.user.createdBy,
       type: { $in: ['random', 'mock'] }
@@ -227,56 +225,63 @@ export const createTest = catchAsyncError(async (req, res, next) => {
       .limit(5)
       .select('questions -_id')
       .populate('questions');
+  
     let usedQuestionIds = new Set();
     previousTests.forEach(test => {
       test.questions.forEach(question => {
         usedQuestionIds.add(question._id.toString());
       });
     });
-
+  
     _test.questions = [];
-    for (let { topic, noOfQue } of questions) {
-      const baseQuery = {
-        topic: topic,
-        $or: [
-          { isCommon: true },
-          { isCommon: false },
-          {
-            creator: _test.type === "random" ? req.user._id : req.user.createdBy
+  
+    for (const subject in totalQues) {
+      if (totalQues.hasOwnProperty(subject)) {
+        const noOfQue = totalQues[subject];
+  
+        for (const topic of topics) {
+          const baseQuery = {
+            topic: topic,
+            $or: [
+              { isCommon: true },
+              { isCommon: false },
+              {
+                creator: _test.type === "random" ? req.user._id : req.user.createdBy
+              }
+            ],
+            subject: subject,
+          };
+  
+          if (req.user.exams && req.user.exams.length > 0) {
+            baseQuery.exam = { $in: req.user.exams };
           }
-        ],
-      };
-
-      if (req.user.subjects && req.user.subjects.length > 0) {
-        baseQuery.subject = { $in: req.user.subjects };
+  
+          let uniqueQuestions = await Question.find({
+            ...baseQuery,
+            _id: { $nin: Array.from(usedQuestionIds) }
+          }).select('_id').limit(noOfQue);
+  
+          if (uniqueQuestions.length < noOfQue) {
+            let deficit = noOfQue - uniqueQuestions.length;
+            let additionalQuestions = await Question.find({
+              ...baseQuery,
+              _id: { $nin: Array.from(uniqueQuestions.map(q => q._id)) }
+            }).select('_id').limit(deficit);
+  
+            uniqueQuestions = uniqueQuestions.concat(additionalQuestions);
+          }
+  
+          _test.questions.push(...uniqueQuestions.map(q => q._id));
+        }
       }
-      if (req.user.exams && req.user.exams.length > 0) {
-        baseQuery.exam = { $in: req.user.exams };
-      }
-
-      let uniqueQuestions = await Question.find({
-        ...baseQuery,
-        _id: { $nin: Array.from(usedQuestionIds) }
-      }).select('_id').limit(noOfQue);
-
-      if (uniqueQuestions.length < noOfQue) {
-        let deficit = noOfQue - uniqueQuestions.length;
-        let additionalQuestions = await Question.find({
-          ...baseQuery,
-          _id: { $nin: Array.from(uniqueQuestions.map(q => q._id)) }
-        }).select('_id').limit(deficit);
-
-        uniqueQuestions = uniqueQuestions.concat(additionalQuestions);
-      }
-
-      _test.questions.push(...uniqueQuestions.map(q => q._id));
     }
-
-    if (_test.questions.length < total) {
-      return res.status(501).json({ message: "Insufficient questions in database to create test" });
+  
+    if (_test.questions.length < Object.values(totalQues).reduce((acc, val) => acc + val, 0)) {
+      return res.status(501).json({ message: "Insufficient questions in the database to create the test" });
     }
-
   }
+  
+  
   if (_test.type === "manual") {
     _test.questions = questions;
   }
