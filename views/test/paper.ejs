@@ -16,74 +16,8 @@ _%>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Quiz Paper</title>
-		<script>
-			MathJax = {
-				tex: {
-					inlineMath: [
-						["$", "$"],
-						["\\(", "\\)"],
-					],
-					displayMath: [
-						["$$", "$$"],
-						["\\[", "\\]"],
-					],
-				},
-			};
-		</script>
-		<script
-			type="text/javascript"
-			id="MathJax-script"
-			async
-			src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
-		></script>
-		<style>
-			@counter-style paren-lower-alpha {
-				system: extends lower-alpha;
-				prefix: "(";
-				suffix: ") ";
-			}
-			body {
-				font-family: Arial, sans-serif;
-				margin: 1rem;
-				padding: 0;
-			}
-			.header {
-				display: grid;
-				grid-template-rows: 1;
-				grid-template-columns: 0.25fr 0.5fr 0.25fr;
-				gap: 1rem;
-				align-items: center;
-				padding: 1rem;
-			}
-			.watermark {
-                mso-visibility: none;
-				position: fixed;
-				top: 50%;
-				left: 50%;
-				transform: translate(-50%, -50%);
-				opacity: 0.2;
-				user-select: none;
-			}
-
-			.options {
-				display: grid;
-				grid-template-columns: repeat(2, 1fr);
-				grid-template-rows: repeat(2, 1fr);
-			}
-			.options li::marker,
-			.questions li::marker {
-				font-weight: bold;
-			}
-			.questions > li {
-				margin: 1rem 0;
-			}
-			.options li {
-				list-style: paren-lower-alpha;
-			}
-			.options li img, .questions > li img {
-				display: block;
-			}
-		</style>
+		<%- include("../partials/mathjax") %>
+		<%- include("../partials/singlecolumnpaper") %>
 	</head>
 	<body>
 		<div class="watermark">
