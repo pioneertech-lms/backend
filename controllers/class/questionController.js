@@ -426,7 +426,7 @@ export const addMultipleQuestions = catchAsyncError(async (req,res,next) => {
       if(row.getCell(14).value !== null){
         explanationImg = await replaceGdriveLink(row.getCell(14).value);
       }
-      
+
       _question.question = _question.question + questionImg;
       _question.options[0] = _question.options[0] + optionOneImg;
       _question.options[1] = _question.options[1] + optionTwoImg;
@@ -437,7 +437,7 @@ export const addMultipleQuestions = catchAsyncError(async (req,res,next) => {
     }
 
 
-    
+
     try {
       const que = await Question.create(_question);
     } catch (error) {
