@@ -12,7 +12,8 @@ const ObjectId = mongoose.Types.ObjectId;
 export const getAllQuestions = catchAsyncError(async (req,res,next) => {
     let query = {};
 
-      // Check if question.subject is one of req.user.subjects
+    
+    // Check if question.subject is one of req.user.subjects
       if (req.user.subjects && req.user.subjects.length > 0) {
         query.subject = { $in: req.user.subjects };
       }
@@ -20,6 +21,24 @@ export const getAllQuestions = catchAsyncError(async (req,res,next) => {
         query.exam = { $in: req.user.exams };
       }
 
+      if (req.query.exam) {
+        const exams = Array.isArray(req.query.exam)
+          ? req.query.exam
+          : [req.query.exam];
+    
+        query.exam = {
+          $in: exams,
+        };
+      }
+      if (req.query.subject) {
+        const subjects = Array.isArray(req.query.subject)
+          ? req.query.subject
+          : [req.query.subject];
+    
+        query.subject = {
+          $in: subjects,
+        };
+      }
 
       let limit = parseInt(req.query.perPage) || 10;
       let page = parseInt(req.query.page, 10) || 1;
@@ -265,13 +284,19 @@ export const deleteSingleQuestion = catchAsyncError(async (req,res,next) => {
 
     if(!questionFound){
         return res.status(404).json({message:"question not found!"});
-    } else {
-      await Question.deleteOne({ _id: questionFound._id });
-
-        // questionFound.isDeleted = true;
-        // await questionFound.save();
-        return res.status(200).json({message:"question deleted successfully"});
     }
+
+    if(req.user.role === "admin" || questionFound.creator.toString() === req.user._id.toString()){
+
+    await Question.deleteOne({ _id: questionFound._id });
+
+      // questionFound.isDeleted = true;
+      // await questionFound.save();
+      return res.status(200).json({message:"question deleted successfully"});
+    } else {
+      return res.status(403).json({message:"You are not authorized to delete this question"});
+    }
+
 })
 
 export const addMultipleQuestions = catchAsyncError(async (req,res,next) => {
@@ -481,6 +506,25 @@ export const getImpQuestions = catchAsyncError(async (req, res, next) => {
       { yearOfAppearance: regex },
       { isCommon: true }
     ];
+  }
+
+  if (req.query.exam) {
+    const exams = Array.isArray(req.query.exam)
+      ? req.query.exam
+      : [req.query.exam];
+
+    query.exam = {
+      $in: exams,
+    };
+  }
+  if (req.query.subject) {
+    const subjects = Array.isArray(req.query.subject)
+      ? req.query.subject
+      : [req.query.subject];
+
+    query.subject = {
+      $in: subjects,
+    };
   }
 
   // Apply topic filter if present
