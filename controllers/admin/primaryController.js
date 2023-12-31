@@ -4,18 +4,15 @@ import { User } from "../../models/User.js";
 import { Question } from "../../models/Question.js";
 
 export const deleteUser = catchAsyncError(async (req, res, next) => {
-    const {id} = req.params;
+  const { id } = req.params;
 
-    const user = await User.findById(id);
+  const result = await User.deleteOne({ _id: id });
 
-    if(user){
-        user.isDeleted = true;
-        user.save();
-
-        return res.status(200).json({message:"User deleted successfully"});
-    } else {
-        return res.status(404).json({message:"User not found"});
-    }
+  if (result.deletedCount > 0) {
+    return res.status(200).json({ message: "User deleted successfully" });
+  } else {
+    return res.status(404).json({ message: "User not found" });
+  }
 });
 
 export const getAllUsers = catchAsyncError(async (req, res, next) => {
