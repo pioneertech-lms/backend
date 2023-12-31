@@ -12,9 +12,7 @@ export const loginUser = catchAsyncError(async (req, res, next) => {
   const { username, password, role } = req.body;
 
   const user = await User.findOne({
-    $or: [{ phone: username }, { email: username }, { username: username }],
-    isDeleted: false,
-    isActive: true,
+    $or: [{ phone: username }, { email: username }, { username: username }], 
     status: true,
   }).select("+password");
 
@@ -22,13 +20,13 @@ export const loginUser = catchAsyncError(async (req, res, next) => {
     return res.status(401).json({ message: "Account with this credentials doesn't exist" });
   }
 
-  if (user.status === false) {
+  if (user.status === false || user.isActive === false) {
     return res.status(403).json({ message: "Your account is deactivated. Please contact admin to retrieve your account." });
   }
 
   let isMatch = await user.comparePassword(password);
   if (!isMatch) {
-    return res.status(401).json({ message: "Invalid login credentials" });
+    return res.status(401).json({ message: "Invalid email or password!" });
   }
 
   // Check if the user is already logged in from another device
