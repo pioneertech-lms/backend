@@ -18,6 +18,33 @@ _%>
 		<title>Quiz Paper</title>
 		<%- include("../partials/mathjax") %>
 		<%- include("../partials/singlecolumnpaper") %>
+		<% if (layout ==='two-column') { %>	
+			<style>
+				li.question {
+					margin-bottom: 28px;
+				}
+
+				ol.questions{
+					padding-left: 15px;
+				}
+					ul {
+						position: relative;
+						column-count: 2;
+						column-gap: 50px;
+						max-width: 100%; 
+						margin: 20px auto;
+						padding-left: 0; 
+					}
+					ul::after {
+						content: "";
+						position: absolute;
+						top: 0;
+						bottom: 0;
+						left: 49%;
+						border-left: 1px solid #ccc;
+					}
+			</style>
+		<% } %>
 	</head>
 	<body>
 		<div class="watermark">
@@ -54,8 +81,9 @@ _%>
 				<p style="color: gray; text-align: center">
 					<%= subject.toUpperCase() %>
 				</p>
+				<ul>
 				<% questions.forEach(function(question){ %>
-				<li class="question">
+				<li type="1" class="question">
 					<div><%- question.question %></div>
 					<ol class="options" type="a">
 						<% question.options.forEach(function (option){ %>
@@ -63,7 +91,10 @@ _%>
 						<%})%>
 					</ol>
 				</li>
-				<%}) %><% } %> <%}) %>
+				<%}) %>
+			</ul>
+				<% } %> 
+				<%}) %>
 			</ol>
 		</div>
 
