@@ -18,6 +18,25 @@ export const getAllTeacherTests = catchAsyncError(async (req, res, next) => {
     query.isActive = true;
   }
 
+  if (req.query.type) {
+    const types = Array.isArray(req.query.type)
+      ? req.query.type
+      : [req.query.type];
+
+    query.type = {
+      $in: types,
+    };
+  }
+  if (req.query.subject) {
+    const subjects = Array.isArray(req.query.subject)
+      ? req.query.subject
+      : [req.query.subject];
+
+    query.subject = {
+      $in: subjects,
+    };
+  }
+
   let limit = parseInt(req.query.perPage) || 10;
   let page = req.query.page ? req.query.page : 1;
   let skip = (page - 1) * (req.query.perPage ? req.query.perPage : 10);
@@ -95,6 +114,25 @@ export const getAllStudentTests = catchAsyncError(async (req, res, next) => {
       { creator: req.user._id },
     ]
   };
+
+  if (req.query.type) {
+    const types = Array.isArray(req.query.type)
+      ? req.query.type
+      : [req.query.type];
+
+    query.type = {
+      $in: types,
+    };
+  }
+  if (req.query.subject) {
+    const subjects = Array.isArray(req.query.subject)
+      ? req.query.subject
+      : [req.query.subject];
+
+    query.subject = {
+      $in: subjects,
+    };
+  }
 
   if (req.query.isDeleted === "true") {
     query.isActive = false;
@@ -300,6 +338,17 @@ export const createTest = catchAsyncError(async (req, res, next) => {
 
 });
 
+export const deleteTest = catchAsyncError(async (req, res, next) => {
+  const { id } = req.params;
+
+  const result = await Test.deleteOne({ _id: id });
+
+  if (result.deletedCount > 0) {
+    return res.status(200).json({ message: "Test deleted successfully" });
+  } else {
+    return res.status(404).json({ message: "Test not found" });
+  }});
+
 export const getSingleTest = catchAsyncError(async (req, res, next) => {
 
   const foundTest = await Test.findById(req.params.id);
@@ -363,6 +412,11 @@ import dayjs from "dayjs";
 
 export const generateTest = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
+  let layout = 'one-column'
+
+  if(req.query.layout){
+    layout = req.query.layout
+  }
 
   const testFound = await Test.findById(id)
     .populate('questions')
@@ -394,12 +448,22 @@ export const generateTest = catchAsyncError(async (req, res, next) => {
     paperWithAnswers: 'views/test/paperwithanswers.ejs'
   };
 
+  // // testing - rather than generating pdfs, rendering ejs template
+//  return res.render('test/paper', {
+//     layout,
+//     test: testFound,
+//     duration: dayjs(endTime).diff(startTime, "minutes"),
+//     date: dayjs(startTime).format("DD/MM/YYYY"),
+//   })
+
+
   for (const [name, templatePath] of Object.entries(templatePaths)) {
     try {
       const browser = await puppeteer.launch({ headless: "new" });
       const page = await browser.newPage();
 
       const htmlContent = await ejs.renderFile(templatePath, {
+        layout,
         test: testFound,
         duration: dayjs(endTime).diff(startTime, "minutes"),
         date: dayjs(startTime).format("DD/MM/YYYY"),
