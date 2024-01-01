@@ -6,86 +6,132 @@ import mongoose from "mongoose";
 
 const ObjectId = mongoose.Types.ObjectId;
 
-export const getAllReports = catchAsyncError(async (req,res,next) => {
-    let query = {
-        teacher: new ObjectId(req.params.teacherId)
-      };
 
-      let limit = parseInt(req.query.perPage) || 10;
-      let page = req.query.page ? req.query.page : 1;
-      let skip = (page - 1) * (req.query.perPage ? req.query.perPage : 10);
-      let sort = req.query.sort ? {} : { createdAt: -1 };
-      let search = req.query.search;
+export const getAllReports = catchAsyncError(async (req, res, next) => {
+  let query = {
+    teacher: new ObjectId(req.params.teacherId),
+  };
 
-      if (search) {
-        let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-        const regex = new RegExp(newSearchQuery, "gi");
-        query.$or = [
-          {
-            test: regex,
-          },
-          {
-            student: regex,
-          },
-          {
-            attempted: regex,
-          },
-          {
-            grades: regex,
-          },
-          {
-            status: regex,
-          },
-          {
-            remark: regex,
-          },
-          {
-            total: regex,
-          },
-        ];
-      }
+  let limit = parseInt(req.query.perPage) || 10;
+  let page = req.query.page ? req.query.page : 1;
+  let skip = (page - 1) * (req.query.perPage ? req.query.perPage : 10);
+  let sort = req.query.sort ? {} : { createdAt: -1 };
+  let search = req.query.search;
 
-      let aggregateQuery = [
-        {
-          $match: query,
-        },
-        {
-          $sort: sort,
-        },
-        {
-          $facet: {
-            data: [
-              {
-                $skip: skip,
+  if (search) {
+    let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+    const regex = new RegExp(newSearchQuery, "gi");
+    query.$or = [
+      {
+        test: regex,
+      },
+      {
+        student: regex,
+      },
+      {
+        attempted: regex,
+      },
+      {
+        grades: regex,
+      },
+      {
+        status: regex,
+      },
+      {
+        remark: regex,
+      },
+      {
+        total: regex,
+      },
+    ];
+  }
+
+  let aggregateQuery = [
+    {
+      $match: query,
+    },
+    {
+      $sort: sort,
+    },
+    {
+      $lookup: {
+        from: "tests",
+        let: { testId: "$test" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: ["$_id", "$$testId"],
               },
-              {
-                $limit: limit,
-              },
-            ],
-            metadata: [
-              {
-                $match: query,
-              },
-              {
-                $count: "total",
-              },
-            ],
+            },
           },
-        },
-      ];
+          {
+            $project: {
+              // exam: 1,
+              type: 1,
+              subjects: 1,
+            },
+          },
+        ],
+        as: "test",
+      },
+    },
+    {
+      $match: {
+      },
+    },
+    {
+      $unwind: "$test",
+    },
+    {
+      $facet: {
+        data: [
+          {
+            $skip: skip,
+          },
+          {
+            $limit: limit,
+          },
+        ],
+        metadata: [
+          {
+            $match: query,
+          },
+          {
+            $count: "total",
+          },
+        ],
+      },
+    },
+  ];
 
-      const reports = await Report.aggregate(aggregateQuery);
+  if (req.query.subjects) {
+    let subjects = Array.isArray(req.query.subjects)
+      ? req.query.subjects
+      : [req.query.subjects];
+    aggregateQuery[3].$match["test.subjects"] = { $in: subjects };
+  }
 
-      res.status(200).json({
-        reports: reports[0].data,
-        total: reports[0].metadata[0]
-          ? Math.ceil(reports[0].metadata[0].total / limit)
-          : 0,
-        page,
-        perPage: limit,
-        search: search ? search : "",
-      })
-})
+  if (req.query.type) {
+    let types = Array.isArray(req.query.type)
+      ? req.query.type
+      : [req.query.type];
+    aggregateQuery[3].$match["test.type"] = { $in: types };
+  }
+
+  const reports = await Report.aggregate(aggregateQuery);
+
+  res.status(200).json({
+    reports: reports[0].data,
+    total: reports[0].metadata[0]
+      ? Math.ceil(reports[0].metadata[0].total / limit)
+      : 0,
+    page,
+    perPage: limit,
+    search: search ? search : "",
+  });
+});
+
 
 export const getSingleReport = catchAsyncError(async (req,res,next) => {
   const foundReport = await Report.findById(req.params.id);
@@ -323,6 +369,36 @@ export const getReportByStudent = catchAsyncError(async (req,res,next) => {
       $sort: sort,
     },
     {
+      $lookup: {
+        from: "tests",
+        let: { testId: "$test" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $eq: ["$_id", "$$testId"],
+              },
+            },
+          },
+          {
+            $project: {
+              // exam: 1,
+              type: 1,
+              subjects: 1,
+            },
+          },
+        ],
+        as: "test",
+      },
+    },
+    {
+      $match: {
+      },
+    },
+    {
+      $unwind: "$test",
+    },
+    {
       $facet: {
         data: [
           {
@@ -343,6 +419,21 @@ export const getReportByStudent = catchAsyncError(async (req,res,next) => {
       },
     },
   ];
+
+  if (req.query.subjects) {
+    let subjects = Array.isArray(req.query.subjects)
+      ? req.query.subjects
+      : [req.query.subjects];
+    aggregateQuery[3].$match["test.subjects"] = { $in: subjects };
+  }
+
+  if (req.query.type) {
+    let types = Array.isArray(req.query.type)
+      ? req.query.type
+      : [req.query.type];
+    aggregateQuery[3].$match["test.type"] = { $in: types };
+  }
+
 
   const reports = await Report.aggregate(aggregateQuery);
 
