@@ -513,7 +513,7 @@ export const getImpQuestions = catchAsyncError(async (req, res, next) => {
       ? req.query.exam
       : [req.query.exam];
 
-    query.exam = {
+    questionQuery.exam = {
       $in: exams,
     };
   }
@@ -522,7 +522,7 @@ export const getImpQuestions = catchAsyncError(async (req, res, next) => {
       ? req.query.subject
       : [req.query.subject];
 
-    query.subject = {
+    questionQuery.subject = {
       $in: subjects,
     };
   }
