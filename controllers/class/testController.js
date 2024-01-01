@@ -27,6 +27,15 @@ export const getAllTeacherTests = catchAsyncError(async (req, res, next) => {
       $in: types,
     };
   }
+  if (req.query.exam) {
+    const exams = Array.isArray(req.query.exam)
+      ? req.query.exam
+      : [req.query.exam];
+
+    query.exam = {
+      $in: exams,
+    };
+  }
   if (req.query.subject) {
     const subjects = Array.isArray(req.query.subject)
       ? req.query.subject
@@ -138,6 +147,15 @@ export const getAllStudentTests = catchAsyncError(async (req, res, next) => {
       $in: types,
     };
   }
+  if (req.query.exam) {
+    const exams = Array.isArray(req.query.exam)
+      ? req.query.exam
+      : [req.query.exam];
+
+    query.exam = {
+      $in: exams,
+    };
+  }
   if (req.query.subject) {
     const subjects = Array.isArray(req.query.subject)
       ? req.query.subject
@@ -189,7 +207,22 @@ export const getAllStudentTests = catchAsyncError(async (req, res, next) => {
     },
     {
       $facet: {
-        data: [
+        upcomingTests: [
+          {
+            $match: {
+              endTime: { $gt: new Date() },
+            },
+          },
+        ],
+        finishedTests: [
+          {
+            $match: {
+              endTime: { $lt: new Date() },
+            },
+          },
+          {
+            $sort: sort,
+          },
           {
             $skip: skip,
           },
@@ -212,16 +245,16 @@ export const getAllStudentTests = catchAsyncError(async (req, res, next) => {
   const tests = await Test.aggregate(aggregateQuery);
 
   res.status(200).json({
-    tests: tests[0].data,
+    upcomingTests: tests[0].upcomingTests[0],
+    finishedTests: tests[0].finishedTests,
     total: tests[0].metadata[0]
       ? Math.ceil(tests[0].metadata[0].total / limit)
       : 0,
     page,
     perPage: limit,
     search: search ? search : "",
-  })
-})
-
+  });
+});
 
 export const createTest = catchAsyncError(async (req, res, next) => {
   const {
@@ -232,6 +265,7 @@ export const createTest = catchAsyncError(async (req, res, next) => {
     questions,
     startTime,
     endTime,
+    exam,
   } = req.body;
 
   if (!type) {
@@ -254,6 +288,9 @@ export const createTest = catchAsyncError(async (req, res, next) => {
   }
   if (subjects) {
     _test.subjects = subjects;
+  }
+  if (exam) {
+    _test.exam = exam;
   }
   if (startTime) {
     _test.startTime = new Date(startTime);
@@ -383,6 +420,7 @@ export const updateTest = catchAsyncError(async (req, res, next) => {
     duration,
     startTime,
     endTime,
+    exam,
   } = req.body;
 
   const test = await Test.findById(req.params.id);
@@ -396,6 +434,9 @@ export const updateTest = catchAsyncError(async (req, res, next) => {
   }
   if (type) {
     test.type = type;
+  }
+  if (exam) {
+    test.exam = exam;
   }
   if (subjects) {
     test.subjects = subjects;

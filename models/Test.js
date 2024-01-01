@@ -24,6 +24,10 @@ const schema = new mongoose.Schema(
           required:true,
         }
       ],
+      exam:{
+        type:String,
+        enum:["jee","cet","neet"],
+      },
       creator:{
         type: Schema.Types.ObjectId,
         ref: "user",
