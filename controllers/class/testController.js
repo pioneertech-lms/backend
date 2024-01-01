@@ -70,11 +70,23 @@ export const getAllTeacherTests = catchAsyncError(async (req, res, next) => {
       $match: query,
     },
     {
-      $sort: sort,
-    },
-    {
       $facet: {
-        data: [
+        upcomingTests: [
+          {
+            $match: {
+              endTime: { $gt: new Date() },
+            },
+          },
+        ],
+        finishedTests: [
+          {
+            $match: {
+              endTime: { $lt: new Date() },
+            },
+          },
+          {
+            $sort: sort,
+          },
           {
             $skip: skip,
           },
@@ -97,15 +109,17 @@ export const getAllTeacherTests = catchAsyncError(async (req, res, next) => {
   const tests = await Test.aggregate(aggregateQuery);
 
   res.status(200).json({
-    tests: tests[0].data,
+    upcomingTests: tests[0].upcomingTests[0],
+    finishedTests: tests[0].finishedTests,
     total: tests[0].metadata[0]
       ? Math.ceil(tests[0].metadata[0].total / limit)
       : 0,
     page,
     perPage: limit,
     search: search ? search : "",
-  })
-})
+  });
+});
+
 
 export const getAllStudentTests = catchAsyncError(async (req, res, next) => {
   let query = {
