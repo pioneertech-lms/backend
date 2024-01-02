@@ -36,12 +36,12 @@ export const getAllTeacherTests = catchAsyncError(async (req, res, next) => {
       $in: exams,
     };
   }
-  if (req.query.subject) {
-    const subjects = Array.isArray(req.query.subject)
-      ? req.query.subject
-      : [req.query.subject];
+  if (req.query.subjects) {
+    const subjects = Array.isArray(req.query.subjects)
+      ? req.query.subjects
+      : [req.query.subjects];
 
-    query.subject = {
+    query.subjects = {
       $in: subjects,
     };
   }
@@ -156,12 +156,12 @@ export const getAllStudentTests = catchAsyncError(async (req, res, next) => {
       $in: exams,
     };
   }
-  if (req.query.subject) {
-    const subjects = Array.isArray(req.query.subject)
-      ? req.query.subject
-      : [req.query.subject];
+  if (req.query.subjects) {
+    const subjects = Array.isArray(req.query.subjects)
+      ? req.query.subjects
+      : [req.query.subjects];
 
-    query.subject = {
+    query.subjects = {
       $in: subjects,
     };
   }
@@ -179,7 +179,7 @@ export const getAllStudentTests = catchAsyncError(async (req, res, next) => {
   if (search) {
     let newSearchQuery = search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
     const regex = new RegExp(newSearchQuery, "gi");
-    query.$or.concat([
+    query.$or = [
       {
         name: regex,
       },
@@ -195,7 +195,7 @@ export const getAllStudentTests = catchAsyncError(async (req, res, next) => {
       {
         questions: regex,
       },
-    ]);
+    ];
   }
 
   let aggregateQuery = [
