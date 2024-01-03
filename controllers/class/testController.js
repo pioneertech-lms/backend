@@ -118,7 +118,7 @@ export const getAllTeacherTests = catchAsyncError(async (req, res, next) => {
   const tests = await Test.aggregate(aggregateQuery);
 
   res.status(200).json({
-    upcomingTests: tests[0].upcomingTests[0] ?? [],
+    upcomingTests: tests[0].upcomingTests,
     finishedTests: tests[0].finishedTests,
     total: tests[0].metadata[0]
       ? Math.ceil(tests[0].metadata[0].total / limit)
@@ -245,7 +245,7 @@ export const getAllStudentTests = catchAsyncError(async (req, res, next) => {
   const tests = await Test.aggregate(aggregateQuery);
 
   res.status(200).json({
-    upcomingTests: tests[0].upcomingTests[0] ?? [],
+    upcomingTests: tests[0].upcomingTests,
     finishedTests: tests[0].finishedTests,
     total: tests[0].metadata[0]
       ? Math.ceil(tests[0].metadata[0].total / limit)
