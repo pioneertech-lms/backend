@@ -10,7 +10,9 @@ import mongoose from "mongoose";
 const ObjectId = mongoose.Types.ObjectId;
 
 export const getAllQuestions = catchAsyncError(async (req,res,next) => {
-    let query = {};
+    let query = {
+      $or: [{ creator: new ObjectId(req.user._id) }, { isCommon: true }] 
+    };
 
     
     // Check if question.subject is one of req.user.subjects
@@ -68,9 +70,6 @@ export const getAllQuestions = catchAsyncError(async (req,res,next) => {
           {
             yearOfAppearance: regex,
           },
-          {
-            isCommon:true,
-          }
         ];
       }
 
