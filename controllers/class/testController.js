@@ -508,35 +508,35 @@ export const generateTest = catchAsyncError(async (req, res, next) => {
   //     date: dayjs(startTime).format("DD/MM/YYYY"),
   //   })
 
+  const browser = await puppeteer.launch({ headless: "new" });
+  const page = await browser.newPage(); // Single page instance
 
   for (const [name, templatePath] of Object.entries(templatePaths)) {
     try {
-      const browser = await puppeteer.launch({ headless: "new" });
-      const page = await browser.newPage();
-
       const htmlContent = await ejs.renderFile(templatePath, {
         layout,
         test: testFound,
         duration: dayjs(endTime).diff(startTime, "minutes"),
         date: dayjs(startTime).format("DD/MM/YYYY"),
-      })
-      await page.setContent(htmlContent, { waitUntil: "networkidle0" })
+      });
 
-      // Generate PDF with watermark
+      await page.goto('about:blank'); // Clear previous content
+      await page.setContent(htmlContent, { waitUntil: "networkidle0" });
+
       const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
 
-      // Upload the files to S3
       let formData = new FormData();
       formData.append('testPaper', new Blob([pdfBuffer]), `questionPaper.pdf`);
       const response = await axios.post(`${process.env.BACKEND_URL}/api/utils/uploads`, formData);
-      generated[name] = response.data.assets[0]
-      await browser.close();
+      generated[name] = response.data.assets[0];
     } catch (error) {
-      console.error('Error in the main code block:', error.message);
-      await browser.close();
-    } finally {
+      console.error('Error in processing:', name, error.message);
+      // Continue with the next template even if there's an error
     }
   }
+
+  await browser.close();
+
   return res.status(200).json({ message: "PDFs generated successfully", ...generated });
 
 });
