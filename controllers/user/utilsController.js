@@ -2,6 +2,9 @@ import { bucketName, s3 } from "../../config/storageObject.js";
 import { ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
 import { Question } from "../../models/Question.js";
+import mongoose from "mongoose";
+
+const ObjectId = mongoose.Types.ObjectId;
 
 export const uploadStatic = catchAsyncError(async (req, res, next) => {
   const files = req.files;
@@ -76,4 +79,25 @@ export const getQueCountByTeacherId = catchAsyncError(async (req, res, next) => 
   const queNo = highestQueNo?.number ?? 0;
 
   return res.status(200).json({ queNo: queNo + 1 })
+})
+
+export const getQueCountPerTopic = catchAsyncError(async (req, res, next) => {
+  const { id } = req.params;
+
+  const count = await Question.aggregate([
+    { $match: { $or: [{ creator: new ObjectId(id) }, { isCommon: true }] } },
+    {
+      $group: {
+        _id: { topic: "$topic" },
+        count: { $sum: 1 }
+      }
+    }
+  ]);
+
+  const totalCount = count.reduce((acc, { _id, count }) => {
+    acc[_id.topic] = count;
+    return acc;
+  }, {});
+
+  return res.status(200).json(totalCount);
 })
