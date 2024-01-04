@@ -461,7 +461,9 @@ export const addMultipleQuestions = catchAsyncError(async (req,res,next) => {
 
     }
 
-
+    if (req.body.isCommon == "true") {
+      _question.isCommon = true;
+    }
 
     try {
       const que = await Question.create(_question);
