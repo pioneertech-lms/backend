@@ -2,6 +2,9 @@ import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
 import { Class } from "../../models/Class.js";
 import { User } from "../../models/User.js";
 import { Question } from "../../models/Question.js";
+import mongoose from "mongoose";
+
+const ObjectId = mongoose.Types.ObjectId;
 
 export const deleteUser = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
@@ -19,6 +22,12 @@ export const getAllUsers = catchAsyncError(async (req, res, next) => {
   let query = {
     isDeleted: false,
   };
+
+
+  if(req.query.teacherId){
+    query.createdBy = new ObjectId(req.query.teacherId);
+    query.role = "student";
+  }
 
   if(req.query.role){
     query.role = req.query.role;
