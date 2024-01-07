@@ -310,6 +310,7 @@ export const createTest = catchAsyncError(async (req, res, next) => {
     // get last 5 random tests
     const previousTests = await Test.find({
       creator: _test.type === "random" ? req.user._id : req.user.createdBy,
+      exam,
       type: { $in: ['random', 'mock'] }
     })
       .sort({ createdAt: -1 })
@@ -334,6 +335,7 @@ export const createTest = catchAsyncError(async (req, res, next) => {
             creator: _test.type === "random" ? req.user._id : req.user.createdBy
           }
         ],
+        $and: [{ exam }]
       };
 
       if (req.user.subjects && req.user.subjects.length > 0) {

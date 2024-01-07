@@ -83,9 +83,10 @@ export const getQueCountByTeacherId = catchAsyncError(async (req, res, next) => 
 
 export const getQueCountPerTopic = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
+  const { exam } = req.query;
 
   const count = await Question.aggregate([
-    { $match: { $or: [{ creator: new ObjectId(id) }, { isCommon: true }] } },
+    { $match: { $or: [{ creator: new ObjectId(id) }, { isCommon: true }], $and: [{ exam }] } },
     {
       $group: {
         _id: { topic: "$topic" },
