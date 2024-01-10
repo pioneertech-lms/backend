@@ -511,10 +511,9 @@ export const generateTest = catchAsyncError(async (req, res, next) => {
   //   })
 
   const browser = await puppeteer.launch({ headless: "new" });
-  const page = await browser.newPage(); // Single page instance
 
-  for (const [name, templatePath] of Object.entries(templatePaths)) {
-    try {
+  try {
+    await Promise.all(Object.entries(templatePaths).map(async ([name, templatePath]) => {
       const htmlContent = await ejs.renderFile(templatePath, {
         layout,
         test: testFound,
@@ -522,8 +521,13 @@ export const generateTest = catchAsyncError(async (req, res, next) => {
         date: dayjs(startTime).format("DD/MM/YYYY"),
       });
 
-      await page.goto('about:blank'); // Clear previous content
-      await page.setContent(htmlContent, { waitUntil: "networkidle0" });
+      const page = await browser.newPage(); // Single page instance
+      await page.goto('about:blank');
+      await page.setContent(htmlContent);
+      await Promise.all([
+        page.waitForFunction(() => window.mathJaxTypesetComplete),
+        page.waitForNetworkIdle()
+      ]);
 
       const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
 
@@ -531,10 +535,10 @@ export const generateTest = catchAsyncError(async (req, res, next) => {
       formData.append('testPaper', new Blob([pdfBuffer]), `questionPaper.pdf`);
       const response = await axios.post(`${process.env.BACKEND_URL}/api/utils/uploads`, formData);
       generated[name] = response.data.assets[0];
-    } catch (error) {
-      console.error('Error in processing:', name, error.message);
-      // Continue with the next template even if there's an error
-    }
+    }))
+  } catch (error) {
+    console.error('Error in processing:', error.message);
+    // Continue with the next template even if there's an error
   }
 
   await browser.close();
