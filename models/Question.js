@@ -73,6 +73,8 @@ schema.pre('save', async function (next) {
     const existingQuestion = await Question.findOne({
       number: this.number,
       creator: this.creator,
+      subject:this.subject,
+      exam:this.exam,
     });
 
     if (existingQuestion) {

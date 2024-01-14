@@ -384,11 +384,12 @@ const replaceGdriveLink = async (text) => {
     _question.number = row.getCell(1).text || null; // Column 1: number
     _question.question = row.getCell(2).text || ""; // Column 2: question
 
-    let _options = [];
-    if (row.getCell(4).text) _options.push(row.getCell(4).text); // Column 4: optionOne
-    if (row.getCell(6).text) _options.push(row.getCell(6).text); // Column 6: optionTwo
-    if (row.getCell(8).text) _options.push(row.getCell(8).text); // Column 8: optionThree
-    if (row.getCell(10).text) _options.push(row.getCell(10).text); // Column 10: optionFour
+    let _options = ["","","",""];
+
+    if (row.getCell(4).text){ _options[0] =row.getCell(4).text}; // Column 4: optionOne
+    if (row.getCell(6).text) {_options[1] = row.getCell(6).text}; // Column 6: optionTwo
+    if (row.getCell(8).text){ _options[2] = row.getCell(8).text}; // Column 8: optionThree
+    if (row.getCell(10).text){ _options[3] = row.getCell(10).text}; // Column 10: optionFour
     _question.options = _options;
 
     _question.answer = row.getCell(12).text || null; // Column 12: answer
@@ -423,16 +424,16 @@ const replaceGdriveLink = async (text) => {
               _question.question = _question.question ? _question.question + dataUrl : "";
               break;
             case 4: // optionOneImage
-              _question.options[0] = _question.options[0] ? _question.options[0] + dataUrl : "";
+              _question.options[0] = _question.options.length != 0 && _question.options[0] != undefined ? _question.options[0] + dataUrl : "";
               break;
             case 6: // optionTwoImage
-              _question.options[1] = _question.options[1] ? _question.options[1] + dataUrl : "";
+              _question.options[1] = _question.options.length != 0 && _question.options[1] != undefined ? _question.options[1] + dataUrl : "";
               break;
             case 8: // optionThreeImage
-              _question.options[2] = _question.options[2] ? _question.options[2] + dataUrl : "";
+              _question.options[2] = _question.options.length != 0 && _question.options[2] != undefined ? _question.options[2] + dataUrl : "";
               break;
             case 10: // optionFourImage
-              _question.options[3] = _question.options[3] ? _question.options[3] + dataUrl : "";
+              _question.options[3] = _question.options.length != 0 && _question.options[3] != undefined ? _question.options[3] + dataUrl : "";
               break;
             case 13: // Column 14: explanationImage
               _question.explanation = _question.explanation ? _question.explanation + dataUrl : "";
@@ -489,7 +490,8 @@ const replaceGdriveLink = async (text) => {
       const que = await Question.create(_question);
     } catch (error) {
       results.unsavedQues.push({
-        [_question.number]: error.message || 'Duplicate question number for the user'
+        [_question.number]: error.message || 'Error saving this question to database'
+        // [_question.number]: error.message || 'Duplicate question number for the user'
       });
     }
   };
