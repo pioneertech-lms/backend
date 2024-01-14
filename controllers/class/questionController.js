@@ -490,8 +490,9 @@ const replaceGdriveLink = async (text) => {
       const que = await Question.create(_question);
       results.count += 1;
     } catch (error) {
+      if(error.message)
       results.unsavedQues.push({
-        [_question.number]: error.message || 'Duplicate question number for the user'
+        [_question.number]: error.message
       });
     }
   };
