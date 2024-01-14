@@ -11,10 +11,10 @@ const ObjectId = mongoose.Types.ObjectId;
 
 export const getAllQuestions = catchAsyncError(async (req,res,next) => {
     let query = {
-      $or: [{ creator: new ObjectId(req.user._id) }, { isCommon: true }] 
+      $or: [{ creator: new ObjectId(req.user._id) }, { isCommon: true }]
     };
 
-    
+
     // Check if question.subject is one of req.user.subjects
       if (req.user.subjects && req.user.subjects.length > 0) {
         query.subject = { $in: req.user.subjects };
@@ -27,7 +27,7 @@ export const getAllQuestions = catchAsyncError(async (req,res,next) => {
         const exams = Array.isArray(req.query.exam)
           ? req.query.exam
           : [req.query.exam];
-    
+
         query.exam = {
           $in: exams,
         };
@@ -36,7 +36,7 @@ export const getAllQuestions = catchAsyncError(async (req,res,next) => {
         const subjects = Array.isArray(req.query.subject)
           ? req.query.subject
           : [req.query.subject];
-    
+
         query.subject = {
           $in: subjects,
         };
@@ -305,7 +305,7 @@ export const addMultipleQuestions = catchAsyncError(async (req,res,next) => {
 
   // example https://drive.google.com/u/0/open?usp=forms_web&id=1yEPGyBkpnUiisXQ3JxBmtnYAncKdBcpJ
   // https://drive.google.com/open?id=10CUAmeEnzf6zHHG2rxG7LQrqFg37d1zG
- 
+
 const gdriveRegex1 = /https:\/\/drive\.google\.com\/u\/0\/open\?usp=forms_web&id=[a-zA-Z0-9_-]{10,}/g;
 const gdriveRegex2 = /https:\/\/drive\.google\.com\/open\?id=[a-zA-Z0-9_-]{10,}/g;
 
@@ -369,6 +369,7 @@ const replaceGdriveLink = async (text) => {
 
   let results = {
     unsavedQues: [],
+    count: 0,
     message: "questions added successfully",
   };
 
@@ -488,13 +489,15 @@ const replaceGdriveLink = async (text) => {
 
     try {
       const que = await Question.create(_question);
+      results.count += 1;
     } catch (error) {
+      if(error.message)
       results.unsavedQues.push({
-        [_question.number]: error.message || 'Error saving this question to database'
-        // [_question.number]: error.message || 'Duplicate question number for the user'
+        [_question.number]: error.message
       });
     }
   };
+  results.message += ` with count: ${results.count}`
   return res.status(200).json(results);
 })
 
