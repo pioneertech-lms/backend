@@ -191,7 +191,7 @@ export const updateUser = catchAsyncError(async (req, res, next) => {
   if(description){
     user.description = description;
   }
-  
+
 
   if(address || city || state || pincode){
     let _location = {};
@@ -222,7 +222,7 @@ export const updateUser = catchAsyncError(async (req, res, next) => {
 });
 
 export const userChangePassword = catchAsyncError(async (req, res, next) => {
-    
+
     const user = await User.findById(req.params.id).select(
         "+password"
       );
@@ -331,7 +331,7 @@ export const getAllClasses = catchAsyncError(async (req,res,next) => {
 })
 
 export const createClass = catchAsyncError(async (req,res,next) => {
-  
+
   const {
     className,
     description,
@@ -346,7 +346,7 @@ export const createClass = catchAsyncError(async (req,res,next) => {
   } = req.body;
 
   const classFound = await Class.findOne({className});
-  
+
   if(classFound){
     return res.status(502).json({message:"Class with this classname already exists!"});
   }
@@ -487,7 +487,7 @@ export const updateClass = catchAsyncError(async (req,res,next) => {
 
     classFound.location = _location;
   }
-  
+
   const updateClass = await classFound.save();
 
   if(!updateClass){
@@ -504,7 +504,7 @@ export const deleteClass = catchAsyncError(async (req,res,next) => {
   if(classFound){
     classFound.isDeleted = true;
     classFound.save();
-    
+
     return res.status(200).json({message:"Class deleted successfully."});
   }else{
     return res.status(404).json({message:"Class not found!"});
@@ -512,8 +512,8 @@ export const deleteClass = catchAsyncError(async (req,res,next) => {
 })
 
 export const getStats = catchAsyncError(async (req, res, next) => {
-  const teachers = await User.count({role: "teacher"});
-  const students = await User.count({role: "student"});
+  const teachers = await User.count({role: "teacher", isDeleted: false});
+  const students = await User.count({role: "student", isDeleted: false});
   const questions = await Question.count();
 
   return res.status(200).json({teachers, students, questions});
