@@ -381,8 +381,11 @@ const replaceGdriveLink = async (text) => {
 
     let _question = {};
 
+    const highestQueNo = await Question.findOne({ teacher: req.user._id }).sort({ number: -1 });
+    let queNo = highestQueNo?.number ?? 0;
+
     // Check for empty cells before processing
-    _question.number = row.getCell(1).text || null; // Column 1: number
+    _question.number = queNo +1 ; // Column 1: number
     _question.question = row.getCell(2).text || ""; // Column 2: question
 
     let _options = ["","","",""];
