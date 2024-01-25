@@ -416,7 +416,7 @@ const replaceGdriveLink = async (text) => {
       if (imgRow === rowNumber - 1 && [2, 4, 6, 8, 10, 13].includes(imgCol)) {
         // Upload the files to S3
         const formData = new FormData();
-        formData.append('questionImg', new Blob([imageBuf.buffer]), 'questionImg.jpg');
+        formData.append('questionImg', new Blob([imageBuf.buffer]), 'questionImg.'+imageBuf.extension);
 
         const response = await axios.post(`${process.env.BACKEND_URL}/api/utils/uploads`, formData);
 

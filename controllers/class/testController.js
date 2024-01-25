@@ -524,10 +524,7 @@ export const generateTest = catchAsyncError(async (req, res, next) => {
       const page = await browser.newPage(); // Single page instance
       await page.goto('about:blank');
       await page.setContent(htmlContent);
-      await Promise.all([
-        page.waitForFunction(() => window.mathJaxTypesetComplete),
-        page.waitForNetworkIdle()
-      ]);
+      await page.setContent(htmlContent, { waitUntil: "networkidle0" });
 
       const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
 
