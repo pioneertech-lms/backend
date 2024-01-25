@@ -59,26 +59,42 @@ const schema = new mongoose.Schema(
 );
 
 schema.pre('save', async function (next) {
-  if(this.subject){
+  if (this.subject) {
     this.subject = this.subject.toLowerCase();
   }
-  if(this.exam){
+  if (this.exam) {
     this.exam = this.exam.toLowerCase();
   }
 
-  if(!this.isNew){
+  if (!this.isNew) {
     next();
   }
+
+  if (!this.number) {
+    try {
+      const lastQuestion = await Question.findOne({
+        creator: this.creator,
+      }).sort({ number: -1 });
+
+      if (lastQuestion) {
+        this.number = lastQuestion.number + 1;
+      } else {
+        this.number = 1;
+      }
+    } catch (err) {
+      return next(err);
+    }
+  }
+
   try {
     const existingQuestion = await Question.findOne({
       number: this.number,
       creator: this.creator,
-      subject:this.subject,
-      exam:this.exam,
+      subject: this.subject,
+      exam: this.exam,
     });
 
     if (existingQuestion) {
-
       // Log the duplicate question to the unsavedQues array
       return next(new Error('Duplicate question number for the user'));
     }
