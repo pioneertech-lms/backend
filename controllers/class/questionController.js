@@ -286,17 +286,19 @@ export const deleteSingleQuestion = catchAsyncError(async (req,res,next) => {
     if(!questionFound){
         return res.status(404).json({message:"question not found!"});
     }
-
-    if(req.user.role === "admin" || questionFound.creator.toString() === req.user._id.toString()){
-
     await Question.deleteOne({ _id: questionFound._id });
 
-      // questionFound.isDeleted = true;
-      // await questionFound.save();
-      return res.status(200).json({message:"question deleted successfully"});
-    } else {
-      return res.status(403).json({message:"You are not authorized to delete this question"});
-    }
+    return res.status(200).json({message:"question deleted successfully"});
+
+    // if(req.user.role === "admin" || questionFound.creator.toString() === req.user._id.toString()){
+
+    // await Question.deleteOne({ _id: questionFound._id });
+
+    //   // questionFound.isDeleted = true;
+    //   // await questionFound.save();
+    // } else {
+    //   return res.status(403).json({message:"You are not authorized to delete this question"});
+    // }
 
 })
 
