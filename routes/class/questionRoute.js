@@ -10,7 +10,8 @@ import {
     getImpQuestions,
     addImpQuestion,
     deleteImpQuestion,
-    checkImpQuestion
+    checkImpQuestion,
+    importQuestions
 } from "../../controllers/class/questionController.js";
 
 import { checkUserModuleAccess, authorizedUser } from "../../middleWares/accessAuth.js";
@@ -25,6 +26,11 @@ router
 router
     .route("/bulk-add")
     .post(authorizedUser,upload,addMultipleQuestions);
+    
+// import ques from data-entry panel
+router
+    .route("/import")
+    .post(upload,importQuestions);
 
 router
     .route("/imp")

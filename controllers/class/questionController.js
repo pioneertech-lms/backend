@@ -6,6 +6,8 @@ import axios from 'axios';
 import ExcelJS from "exceljs";
 import { readFileSync } from "fs";
 import mongoose from "mongoose";
+import { User } from "../../models/User.js";
+
 
 const ObjectId = mongoose.Types.ObjectId;
 
@@ -658,4 +660,106 @@ export const checkImpQuestion = catchAsyncError(async (req,res,next) => {
   } else {
     return res.status(404).json({isQuestionFound:false,message:"No imp questions found"});
   }
+})
+
+export const importQuestions = catchAsyncError(async (req,res,next) => {
+  const {
+    secretKey,
+    userId,
+    data,
+  } = req.body;
+  // number,
+  // question,
+  // options,
+  // answer,
+  // explanation,
+  // topic,
+  // yearOfAppearance,
+  // exam,
+  // subject,
+  // isCommon,
+  // marks,
+
+  if(!secretKey || secretKey !== process.env.DATA_ENTRY_SECRET){
+    console.log(process.env.DATA_ENTRY_SECRET)
+    return res.status(403).json({message:"Invalid secret key"});
+  }
+
+  if(!userId){
+    return res.status(403).json({message:"Invalid user id"});
+  } else {
+    const userFound = await User.findById(userId);
+    if(!userFound){
+      return res.status(403).json({message:"User not found"});
+    }
+  }
+  
+  if(!data){
+    return res.status(403).json({message:"Invalid data"});
+  }
+
+  let unsavedQues = [];
+
+  data.forEach(async (item) => {
+    let _question =  {
+      question:item.question,
+      answer:item.answer,
+      options:[],
+      creator:userId,
+    };
+  
+    if(item.topic){
+        _question.topic = item.topic
+    }
+    // if(item.number){
+    //     _question.number = item.number
+    // }
+
+    // auto generate number
+    const highestQueNo = await Question.findOne({ teacher: userId }).sort({ number: -1 });
+    let queNo = highestQueNo?.number ?? 0;
+    
+    _question.number = queNo +1 ;
+
+    if(item.marks){
+        _question.marks = item.marks
+    }
+    if(item.explanation){
+        _question.explanation = item.explanation
+    }
+    if(item.yearOfAppearance){
+        _question.yearOfAppearance = item.yearOfAppearance
+    }
+    if(item.exam){
+      _question.exam = item.exam.toLowerCase();
+    }
+    if(item.subject){
+      _question.subject = item.subject.toLowerCase();
+    }
+  
+    _question.isCommon= item.isCommon && item.isCommon === "true" ? true : false;
+  
+    if(item.options){
+        for(let i=0; i< item.options.length;i++){
+            _question.options.push(item.options[i])
+        }
+    }
+  
+    try {
+      const questionCreate = await Question.create(_question);
+      if(questionCreate){
+        console.log("question added successfully");
+      } else {
+        unsavedQues.push({ question: _question });
+      }
+    } catch (err) {
+      let message = err.message || "Something went wrong";
+      console.log(message);
+
+      unsavedQues.push({ question: _question, reason: message });
+    }
+  })
+
+  return res.status(200).json({message:"Questions added successfully", unsavedQues});
+
 })
