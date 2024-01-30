@@ -9,12 +9,34 @@ const ObjectId = mongoose.Types.ObjectId;
 export const deleteUser = catchAsyncError(async (req, res, next) => {
   const { id } = req.params;
 
-  const result = await User.deleteOne({ _id: id });
+  const user = await User.findById(id);
 
-  if (result.deletedCount > 0) {
-    return res.status(200).json({ message: "User deleted successfully" });
-  } else {
+  if (!user) {
     return res.status(404).json({ message: "User not found" });
+  }
+
+  if (user.role !== "teacher") {
+    // Delete the user
+    const result = await User.deleteOne({ _id: id });
+
+    if (result.deletedCount > 0) {
+      return res.status(200).json({ message: "User deleted successfully" });
+    } else {
+      return res.status(500).json({ message: "Failed to delete user" });
+    }
+  } else {
+    // Delete the teacher
+    const result = await User.deleteOne({ _id: id });
+
+    if (result.deletedCount > 0) {
+      // Mark all students of the teacher as inactive
+      await User.updateMany({ createdBy: id, role: "student" }, { isActive: true });
+
+      return res.status(200).json({ message: "Teacher deleted successfully" });
+      // return res.status(200).json({ message: "Teacher and associated students deleted successfully" });
+    } else {
+      return res.status(500).json({ message: "Failed to delete teacher" });
+    }
   }
 });
 
