@@ -18,6 +18,15 @@ _%>
 		<title>Quiz Paper</title>
 		<%- include("../partials/mathjax") %>
 		<%- include("../partials/singlecolumnpaper") %>
+		<style>
+			.questions {
+				display: grid;
+				grid-template-columns: repeat(4, 1fr);
+				grid-template-rows: repeat(auto-fill, minmax(0, 1fr));
+				gap: 1rem;
+				min-height: 80vh;
+			}
+		</style>
 	</head>
 	<body>
 		<div class="watermark">
