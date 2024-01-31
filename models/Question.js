@@ -92,6 +92,7 @@ schema.pre('save', async function (next) {
       creator: this.creator,
       subject: this.subject,
       exam: this.exam,
+      question: this.question
     });
 
     if (existingQuestion) {
@@ -105,7 +106,7 @@ schema.pre('save', async function (next) {
   }
 });
 
-export const Question = mongoose.model("question",schema); 
+export const Question = mongoose.model("question",schema);
 
 
 
