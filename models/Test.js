@@ -16,41 +16,48 @@ const schema = new mongoose.Schema(
           type: String,
           enum: ["physics","chemistry","mathematics","biology"]
         }
-      ],
-      questions:[
+    ],
+    questions:[
         {
           type: Schema.Types.ObjectId,
           ref:"question",
           required:true,
         }
-      ],
-      exam:{
+    ],
+    exam:{
         type:String,
         enum:["jee","cet","neet"],
-      },
-      creator:{
+    },
+    creator:{
         type: Schema.Types.ObjectId,
         ref: "user",
         // required: true,
-      },
-      duration:{
-          type:Number,//in minutes
-          // required:true
-      },
-      startTime:{
+    },
+    duration:{
+        type:Number,//in minutes
+        // required:true
+    },
+    startTime:{
         type:Date,
-      },
-      endTime:{
+    },
+    endTime:{
         type:Date,
-      },
-      isSaved: {
+    },
+    isSaved: {
         type: Boolean,
         default: true,
-      },
     },
-    {
-      timestamps: true,
+  },
+  {
+    timestamps: true,
   }
 );
+
+schema.pre("save", function(next) {
+  if (this.questions.length > 100) {
+    this.questions = this.questions.slice(0, 100);
+  }
+  next();
+});
 
 export const Test = mongoose.model("test",schema);
