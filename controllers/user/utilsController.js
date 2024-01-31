@@ -29,7 +29,7 @@ export const listMaterial = catchAsyncError(async (req, res, next) => {
 
     // Process Question Banks
     const questionBanks = contents
-      .filter(object => object.Key.startsWith("material/question-bank/"))
+      .filter(object => object.Key.startsWith("material/question-bank/") && object.Key !== "material/question-bank/")
       .reduce((acc, object) => {
         const path = object.Key.replace("material/question-bank/", "");
         const [examName, yearWithExtension] = path.split('/');
@@ -43,7 +43,7 @@ export const listMaterial = catchAsyncError(async (req, res, next) => {
 
     // Process Formulae
     const formulae = contents
-      .filter(object => object.Key.startsWith("material/formulae/"))
+      .filter(object => object.Key.startsWith("material/formulae/") && object.Key !== "material/formulae/")
       .reduce((acc, object) => {
         const path = object.Key.replace("material/formulae/", "");
         const [examName, subject, grade, chapterWithExtension] = path.split('/');
