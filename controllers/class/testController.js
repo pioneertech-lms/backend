@@ -367,6 +367,9 @@ export const createTest = catchAsyncError(async (req, res, next) => {
       return res.status(501).json({ message: "Insufficient questions in database to create test" });
     }
 
+    // Hard cap questions to 100 because for some reason it exceeds 100
+    _test.questions = _test.questions.slice(0, 100);
+
   }
 
   if (_test.type === "manual") {
