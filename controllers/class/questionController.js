@@ -25,6 +25,11 @@ export const getAllQuestions = catchAsyncError(async (req,res,next) => {
         query.exam = { $in: req.user.exams };
       }
 
+      if(req.query.yearOfAppearance){
+        const yearOfAppearance = Array.isArray(req.query.yearOfAppearance) ? req.query.yearOfAppearance : [req.query.yearOfAppearance];
+        query.yearOfAppearance = { $in: yearOfAppearance };
+      }
+
       if (req.query.exam) {
         const exams = Array.isArray(req.query.exam)
           ? req.query.exam
