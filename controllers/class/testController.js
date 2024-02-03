@@ -1,13 +1,9 @@
 import { catchAsyncError } from "../../middleWares/catchAsyncError.js";
 import { Test } from "../../models/Test.js";
 import { Question } from "../../models/Question.js";
-import { ensureDirExists } from "../../utils/files.js";
-import axios from 'axios';
-import htmlDocx from 'html-docx-js';
-import fs from 'fs';
-import path from 'path';
-import mammoth from 'mammoth';
 import ejs from "ejs";
+import dayjs from "dayjs";
+
 
 export const getAllTeacherTests = catchAsyncError(async (req, res, next) => {
   let query = {
@@ -464,40 +460,25 @@ export const updateTest = catchAsyncError(async (req, res, next) => {
   }
 });
 
-import puppeteer from 'puppeteer'
-import dayjs from "dayjs";
+export const printTest = catchAsyncError(async (req, res, next) => {
+  const type = req.query.type;
+  const id = req.params.id;
 
-export const generateTest = catchAsyncError(async (req, res, next) => {
-  const { id } = req.params;
+  const testFound = await Test.findById(id)
+    .populate('questions')
+    .populate('creator');
+
   let layout = 'one-column'
 
   if (req.query.layout) {
     layout = req.query.layout
   }
 
-  const testFound = await Test.findById(id)
-    .populate('questions')
-    .populate('creator');
-  // return console.log(testFound);
-
-  if (!testFound) {
-    return res.status(404).json({ message: "test not found!" });
-  }
-
-  // generate pdf
   const questions = testFound.questions;
 
   const startTime = new Date(testFound.startTime);
   const endTime = new Date(testFound.endTime);
   const durationInMinutes = (endTime - startTime) / (1000 * 60);
-  const hours = Math.floor(durationInMinutes / 60);
-  const minutes = Math.floor(durationInMinutes % 60);
-
-  const generated = {
-    paper: '',
-    answers: '',
-    paperWithAnswers: ''
-  };
 
   const templatePaths = {
     paper: 'views/test/paper.ejs',
@@ -505,46 +486,26 @@ export const generateTest = catchAsyncError(async (req, res, next) => {
     paperWithAnswers: 'views/test/paperwithanswers.ejs'
   };
 
-  // // testing - rather than generating pdfs, rendering ejs template
-  //  return res.render('test/paper', {
-  //     layout,
-  //     test: testFound,
-  //     duration: dayjs(endTime).diff(startTime, "minutes"),
-  //     date: dayjs(startTime).format("DD/MM/YYYY"),
-  //   })
-
-  const browser = await puppeteer.launch({ headless: "new" });
+  const htmlContent = await ejs.renderFile(templatePaths[type], {
+    layout,
+    test: testFound,
+    duration: dayjs(endTime).diff(startTime, "minutes"),
+    date: dayjs(startTime).format("DD/MM/YYYY"),
+  });
 
   try {
-    await Promise.all(Object.entries(templatePaths).map(async ([name, templatePath]) => {
-      const htmlContent = await ejs.renderFile(templatePath, {
-        layout,
-        test: testFound,
-        duration: dayjs(endTime).diff(startTime, "minutes"),
-        date: dayjs(startTime).format("DD/MM/YYYY"),
-      });
+    const browser = req.app.get("browser");
+    const page = await browser.newPage(); // Single page instance
+    await page.goto("about:blank");
+    await page.setContent(htmlContent, { waitUntil: "networkidle0" });
 
-      const page = await browser.newPage(); // Single page instance
-      await page.goto('about:blank');
-      await page.setContent(htmlContent);
-      await page.setContent(htmlContent, { waitUntil: "networkidle0" });
+    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=${testFound.name}.pdf`);
+    res.send(pdfBuffer);
 
-      const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
-
-      let formData = new FormData();
-      formData.append('testPaper', new Blob([pdfBuffer]), `questionPaper.pdf`);
-      const response = await axios.post(`${process.env.BACKEND_URL}/api/utils/uploads`, formData);
-      generated[name] = response.data.assets[0];
-    }))
-  } catch (error) {
-    console.error('Error in processing:', error.message);
-    // Continue with the next template even if there's an error
+    await page.close();
+  } catch (err) {
+    res.status(500).send("Could not generate PDF!");
   }
-
-  await browser.close();
-
-  return res.status(200).json({ message: "PDFs generated successfully", ...generated });
-
-});
-
-
+})

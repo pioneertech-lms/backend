@@ -6,7 +6,8 @@ import {
     getSingleTest,
     updateTest,
     generateTest,
-    deleteTest
+    deleteTest,
+    printTest
 } from "../../controllers/class/testController.js";
 
 import { authorizedUser } from "../../middleWares/accessAuth.js";
@@ -29,7 +30,7 @@ router
     .delete(authorizedUser,deleteTest);
 
 router
-  .route("/generate/:id")
-  .get(authorizedUser,generateTest);
+  .route("/print/:id")
+  .get(printTest);
 
 export default router;

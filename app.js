@@ -28,6 +28,9 @@ const __dirname = path.dirname(__filename);
 //   optionsSuccessStatus: 200,
 // };
 
+import puppeteer from 'puppeteer'
+app.set("browser", await puppeteer.launch({ headless: "new" }))
+
 app.use(cors());
 app.use(cookieParser());
 // app.use(flash());
