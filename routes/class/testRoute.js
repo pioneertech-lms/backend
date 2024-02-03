@@ -5,7 +5,6 @@ import {
     createTest,
     getSingleTest,
     updateTest,
-    generateTest,
     deleteTest,
     printTest
 } from "../../controllers/class/testController.js";
