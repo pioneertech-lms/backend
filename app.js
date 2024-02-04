@@ -13,6 +13,7 @@ import MongoStore from "connect-mongo";
 import passport from "passport";
 import morgan from "morgan";
 import expressSanitizer from "express-sanitizer";
+import compression from "compression";
 import { config } from "dotenv";
 
 config({ path: "./config/config.env" });
@@ -30,6 +31,9 @@ const __dirname = path.dirname(__filename);
 
 import puppeteer from 'puppeteer'
 app.set("browser", await puppeteer.launch({ headless: "new" }))
+
+// compression middleware to gzip the response
+app.use(compression());
 
 app.use(cors());
 app.use(cookieParser());
