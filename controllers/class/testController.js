@@ -295,7 +295,7 @@ export const createTest = catchAsyncError(async (req, res, next) => {
     _test.endTime = new Date(endTime);
   }
 
-  if (_test.type === "random" || _test.type === "mock") {
+  if (_test.type === "random" || _test.type === "mock" || _test.type === "scheduled") {
 
     const { questions, total } = req.body;
 
@@ -307,7 +307,7 @@ export const createTest = catchAsyncError(async (req, res, next) => {
     const previousTests = await Test.find({
       creator: _test.type === "random" ? req.user._id : req.user.createdBy,
       exam,
-      type: { $in: ['random', 'mock'] }
+      type: { $in: ['random', 'mock', 'scheduled'] }
     })
       .sort({ createdAt: -1 })
       .limit(5)

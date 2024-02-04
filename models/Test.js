@@ -8,7 +8,7 @@ const schema = new mongoose.Schema(
     },
     type:{
         type:String,
-        enum:["random","live","manual","mock"],
+        enum:["random","live","manual","mock","scheduled"],
         required:true
     },
     subjects:[
