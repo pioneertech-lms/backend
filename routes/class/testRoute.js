@@ -6,7 +6,8 @@ import {
     getSingleTest,
     updateTest,
     deleteTest,
-    printTest
+    printTest,
+    getRandomQuestions
 } from "../../controllers/class/testController.js";
 
 import { authorizedUser } from "../../middleWares/accessAuth.js";
@@ -17,6 +18,8 @@ router
   .route("/")
   .get(authorizedUser,getAllTeacherTests)
   .post(authorizedUser,createTest);
+
+router.route("/random-questions").post(authorizedUser, getRandomQuestions)
 
 router
   .route("/student")

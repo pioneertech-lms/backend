@@ -252,6 +252,90 @@ export const getAllStudentTests = catchAsyncError(async (req, res, next) => {
   });
 });
 
+export const getRandomQuestions = catchAsyncError(async (req, res, next) => {
+  const selectedQuestions = [];
+  const { questions, total, type, exam } = req.body;
+
+  if (!questions || !total) {
+    return res.status(500).json({ message: "pass questions and total!" });
+  }
+
+  // get last 5 random tests
+  const previousTests = await Test.find({
+    creator: type === "random" ? req.user._id : req.user.createdBy,
+    exam,
+    type: { $in: ['random', 'mock', 'scheduled'] }
+  })
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .select('questions -_id')
+    .populate('questions');
+  let usedQuestionIds = new Set();
+  previousTests.forEach(test => {
+    test.questions.forEach(question => {
+      usedQuestionIds.add(question._id.toString());
+    });
+  });
+
+  for (let { topic, noOfQue } of questions) {
+    const baseQuery = {
+      topic: topic,
+      $or: [
+        { isCommon: true },
+        { isCommon: false },
+        {
+          creator: type === "random" ? req.user._id : req.user.createdBy
+        }
+      ],
+      $and: [{ exam }]
+    };
+
+    if (req.user.subjects && req.user.subjects.length > 0) {
+      baseQuery.subject = { $in: req.user.subjects };
+    }
+    if (req.user.exams && req.user.exams.length > 0) {
+      baseQuery.exam = { $in: req.user.exams };
+    }
+
+    let uniqueQuestions = await Question.aggregate([
+      {
+        $match: {
+          ...baseQuery,
+          _id: { $nin: Array.from(usedQuestionIds) }
+        }
+      },
+      {
+        $sample: { size: noOfQue }
+      }
+    ]);
+
+    if (uniqueQuestions.length < noOfQue) {
+      let deficit = noOfQue - uniqueQuestions.length;
+      let additionalQuestions = await Question.aggregate([
+        {
+          $match: {
+            ...baseQuery,
+            _id: { $nin: Array.from(uniqueQuestions.map(q => q._id)) }
+          }
+        },
+        {
+          $sample: { size: deficit }
+        }
+      ]);
+
+      uniqueQuestions = uniqueQuestions.concat(additionalQuestions);
+    }
+
+    selectedQuestions.push(...uniqueQuestions);
+  }
+
+  if (selectedQuestions.length < total) {
+    return res.status(501).json({ message: "Insufficient questions in database to create test" });
+  }
+
+  return res.status(200).json({ message: "OK", questions: selectedQuestions });
+})
+
 export const createTest = catchAsyncError(async (req, res, next) => {
   const {
     name,
@@ -295,80 +379,7 @@ export const createTest = catchAsyncError(async (req, res, next) => {
     _test.endTime = new Date(endTime);
   }
 
-  if (_test.type === "random" || _test.type === "mock" || _test.type === "scheduled") {
-
-    const { questions, total } = req.body;
-
-    if (!questions || !total) {
-      return res.status(500).json({ message: "pass questions and total!" });
-    }
-
-    // get last 5 random tests
-    const previousTests = await Test.find({
-      creator: _test.type === "random" ? req.user._id : req.user.createdBy,
-      exam,
-      type: { $in: ['random', 'mock', 'scheduled'] }
-    })
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .select('questions -_id')
-      .populate('questions');
-    let usedQuestionIds = new Set();
-    previousTests.forEach(test => {
-      test.questions.forEach(question => {
-        usedQuestionIds.add(question._id.toString());
-      });
-    });
-
-    _test.questions = [];
-    for (let { topic, noOfQue } of questions) {
-      const baseQuery = {
-        topic: topic,
-        $or: [
-          { isCommon: true },
-          { isCommon: false },
-          {
-            creator: _test.type === "random" ? req.user._id : req.user.createdBy
-          }
-        ],
-        $and: [{ exam }]
-      };
-
-      if (req.user.subjects && req.user.subjects.length > 0) {
-        baseQuery.subject = { $in: req.user.subjects };
-      }
-      if (req.user.exams && req.user.exams.length > 0) {
-        baseQuery.exam = { $in: req.user.exams };
-      }
-
-      let uniqueQuestions = await Question.find({
-        ...baseQuery,
-        _id: { $nin: Array.from(usedQuestionIds) }
-      }).select('_id').limit(noOfQue);
-
-      if (uniqueQuestions.length < noOfQue) {
-        let deficit = noOfQue - uniqueQuestions.length;
-        let additionalQuestions = await Question.find({
-          ...baseQuery,
-          _id: { $nin: Array.from(uniqueQuestions.map(q => q._id)) }
-        }).select('_id').limit(deficit);
-
-        uniqueQuestions = uniqueQuestions.concat(additionalQuestions);
-      }
-
-      _test.questions.push(...uniqueQuestions.map(q => q._id));
-    }
-
-    if (_test.questions.length < total) {
-      return res.status(501).json({ message: "Insufficient questions in database to create test" });
-    }
-
-    // Hard cap questions to 100 because for some reason it exceeds 100
-    _test.questions = _test.questions.slice(0, 100);
-
-  }
-
-  if (_test.type === "manual") {
+  if (_test.type === "manual" || _test.type === "random" || _test.type === "mock" || _test.type === "scheduled") {
     _test.questions = questions;
   }
   if (_test.type === "live") {
