@@ -1,8 +1,16 @@
 <style>
 	@media print {
+		table:last-of-type {
+			page-break-after: auto;
+		}
+		html,
+		body {
+			height: 100%;
+		}
 		body {
 			margin: 0;
 			padding: 0;
+			font-size: 16pt;
 		}
 	}
 
@@ -32,6 +40,7 @@
 		transform: translate(-50%, -50%);
 		opacity: 0.2;
 		user-select: none;
+		z-index: 9999;
 	}
 
 	.options {
@@ -50,17 +59,64 @@
 	}
 	.options li {
 		list-style: paren-lower-alpha;
+		margin: 0.5rem;
 	}
 	.explanation img,
 	.options li img,
-	.questions > li img {
-		display: block;
+	.question img {
+		width: 80%;
+		height: auto;
+		object-fit: contain;
+		overflow: hidden;
 	}
 
 	.questions {
 		min-height: 80vh;
-		/* column-count: 2;
-		column-gap: 1rem;
-		column-rule: 1px solid; */
+	}
+
+	/* .explanation,
+	.options li,
+	.question {
+		border: 1px solid gray;
+	} */
+</style>
+
+<% if (layout ==='two-column') { %>
+<style>
+	.explanation img,
+	.options li img,
+	.question img {
+		width: 100%;
+		height: auto;
+		object-fit: contain;
+		overflow: hidden;
+	}
+
+	li.question {
+		margin-bottom: 28px;
+		margin-left: 1rem;
+		margin-right: 1rem;
+	}
+
+	ol.questions {
+		padding-left: 15px;
+	}
+	ul {
+		position: relative;
+		column-count: 2;
+		column-gap: 2rem;
+		column-fill: auto;
+		max-width: 100%;
+		margin: 20px auto;
+		padding-left: 0;
+	}
+	ul::after {
+		content: "";
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 49%;
+		border-left: 1px solid #ccc;
 	}
 </style>
+<% } %>

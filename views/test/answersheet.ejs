@@ -17,7 +17,7 @@ _%>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Quiz Paper</title>
 		<%- include("../partials/mathjax") %>
-		<%- include("../partials/singlecolumnpaper") %>
+		<%- include("../partials/css") %>
 		<style>
 			.questions {
 					display: flex;
@@ -31,7 +31,7 @@ _%>
 					margin: 1rem;
 					height: fit-content;
 				}
-		</style>		
+		</style>
 	</head>
 	<body>
 		<div class="watermark">
@@ -72,7 +72,7 @@ _%>
 					<li class="question">
 					<%= String.fromCharCode(64 + question.answer) %>
 					</li>
-				
+
 				<%}) %>
 			</ol>
 			<% } %> <%}) %>
