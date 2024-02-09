@@ -489,7 +489,7 @@ export const printTest = catchAsyncError(async (req, res, next) => {
 
   const questions = testFound.questions.map(q => {
     q.question = trimHtml(q.question)
-    q.explanation = trimHtml(q.explanation)
+    // q.explanation = trimHtml(q.explanation)
     q.options = q.options.map(trimHtml)
   });
 
