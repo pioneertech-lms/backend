@@ -10,7 +10,7 @@
 		body {
 			margin: 0;
 			padding: 0;
-			font-size: 16pt;
+			font-size: 14pt;
 		}
 	}
 
@@ -43,19 +43,23 @@
 		z-index: 9999;
 	}
 
+	.subject {
+		margin: 1rem 0;
+	}
+
 	.options {
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
 		grid-template-rows: repeat(2, 1fr);
-		gap: 1rem;
-		margin: 1rem 0;
+		gap: 0.5rem;
+		margin: 0.5rem 0;
 	}
 	.options li::marker,
 	.questions li::marker {
 		font-weight: bold;
 	}
 	.questions > li {
-		margin: 1rem;
+		margin: 0.5rem;
 	}
 	.options li {
 		list-style: paren-lower-alpha;
@@ -64,8 +68,9 @@
 	.explanation img,
 	.options li img,
 	.question img {
-		width: 80%;
+		width: 60%;
 		height: auto;
+		max-height: 10rem;
 		object-fit: contain;
 		overflow: hidden;
 	}
@@ -79,6 +84,11 @@
 	.question {
 		border: 1px solid gray;
 	} */
+
+	/* Remove extra padding */
+	p {
+		margin: 0;
+	}
 </style>
 
 <% if (layout ==='two-column') { %>

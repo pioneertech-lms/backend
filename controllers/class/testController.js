@@ -472,6 +472,8 @@ export const updateTest = catchAsyncError(async (req, res, next) => {
 });
 
 export const printTest = catchAsyncError(async (req, res, next) => {
+  const trimHtml = html => html.replace(/^\s+$/gm, "").replace("&nbsp;", "").replace(/\<br(\s\/)?\>/gm, "");
+
   const type = req.query.type;
   const id = req.params.id;
 
@@ -485,7 +487,11 @@ export const printTest = catchAsyncError(async (req, res, next) => {
     layout = req.query.layout
   }
 
-  const questions = testFound.questions;
+  const questions = testFound.questions.map(q => {
+    q.question = trimHtml(q.question)
+    q.explanation = trimHtml(q.explanation)
+    q.options = q.options.map(trimHtml)
+  });
 
   const startTime = new Date(testFound.startTime);
   const endTime = new Date(testFound.endTime);
@@ -512,7 +518,7 @@ export const printTest = catchAsyncError(async (req, res, next) => {
 
     const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { left: '0.5cm', top: '1cm', right: '0.5cm', bottom: '1cm' } });
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `filename=${testFound.name}.pdf`);
+    res.setHeader('Content-Disposition', `attachment; filename=${testFound.name}.pdf`);
     res.send(pdfBuffer);
 
     await page.close();

@@ -51,7 +51,7 @@ _%>
 			<ol class="questions">
 				<% Object.entries(groupedQuestions).forEach(function ([subject,
 				questions]) { %> <% if(questions.length) { %>
-				<p style="color: gray; text-align: center">
+				<p class="subject" style="color: gray; text-align: center">
 					<%= subject.toUpperCase() %>
 				</p>
 				<ul>
@@ -60,7 +60,7 @@ _%>
 					<div><%- question.question %></div>
 					<ol class="options" type="a">
 						<% question.options.forEach(function (option){ %>
-						<li><%- option %></li>
+						<li><%- option.replace(/^\s+$/gm, "").replace("&nbsp;", "").replace(/\<br(\s\/)?\>/gm, "") %></li>
 						<%})%>
 					</ol>
 				</li>
