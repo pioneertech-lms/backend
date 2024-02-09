@@ -700,12 +700,16 @@ export const importQuestions = catchAsyncError(async (req,res,next) => {
       return res.status(403).json({message:"User not found"});
     }
   }
-  
+
   if(!data){
     return res.status(403).json({message:"Invalid data"});
   }
 
   let unsavedQues = [];
+
+  // auto generate number
+  const highestQueNo = await Question.findOne({ teacher: userId }).sort({ number: -1 });
+  let queNo = highestQueNo?.number ?? 0;
 
   data.forEach(async (item) => {
     let _question =  {
@@ -714,7 +718,7 @@ export const importQuestions = catchAsyncError(async (req,res,next) => {
       options:[],
       creator:userId,
     };
-  
+
     if(item.topic){
         _question.topic = item.topic
     }
@@ -722,11 +726,8 @@ export const importQuestions = catchAsyncError(async (req,res,next) => {
     //     _question.number = item.number
     // }
 
-    // auto generate number
-    const highestQueNo = await Question.findOne({ teacher: userId }).sort({ number: -1 });
-    let queNo = highestQueNo?.number ?? 0;
-    
-    _question.number = queNo +1 ;
+    queNo++;
+    _question.number = queNo;
 
     if(item.marks){
         _question.marks = item.marks
@@ -743,15 +744,15 @@ export const importQuestions = catchAsyncError(async (req,res,next) => {
     if(item.subject){
       _question.subject = item.subject.toLowerCase();
     }
-  
+
     _question.isCommon= item.isCommon && item.isCommon === "true" ? true : false;
-  
+
     if(item.options){
         for(let i=0; i< item.options.length;i++){
             _question.options.push(item.options[i])
         }
     }
-  
+
     try {
       const questionCreate = await Question.create(_question);
       if(questionCreate){
