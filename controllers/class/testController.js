@@ -516,7 +516,7 @@ export const printTest = catchAsyncError(async (req, res, next) => {
     await page.goto("about:blank");
     await page.setContent(htmlContent, { waitUntil: "networkidle0" });
 
-    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { left: '0.5cm', top: '1cm', right: '0.5cm', bottom: '1cm' } });
+    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { left: '0.5cm', top: '0.5cm', right: '0.5cm', bottom: '0.5cm' } });
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=${testFound.name}.pdf`);
     res.send(pdfBuffer);
