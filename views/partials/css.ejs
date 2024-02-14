@@ -21,6 +21,7 @@
 	}
 	body {
 		font-family: Arial, sans-serif;
+		font-size: 10pt;
 		margin: 1rem;
 		padding: 0;
 	}
@@ -48,11 +49,12 @@
 	}
 
 	.options {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		grid-template-rows: repeat(2, 1fr);
+		margin: 0;
+		padding: 0;
+		display: flex;
 		gap: 0.5rem;
-		margin: 0.5rem 0;
+		align-items: center;
+		flex-wrap: wrap;
 	}
 	.options li::marker,
 	.questions li::marker {
@@ -60,10 +62,11 @@
 	}
 	.question {
 		margin: 0.5rem;
+		page-break-inside: avoid;
 	}
 	.options li {
 		list-style: paren-lower-alpha;
-		margin: 0.5rem;
+		margin: 0 0.5rem;
 	}
 	.explanation img,
 	.options li img,
