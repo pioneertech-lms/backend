@@ -316,7 +316,7 @@ export const updateReport = catchAsyncError(async (req,res,next) => {
 
 })
 
-export const getReportByStudent = catchAsyncError(async (req,res,next) => {
+export const getReportByStudent = catchAsyncError(async (req,res,next) => { 
   let query = {
     student: new ObjectId(req.params.studentId)
   };
@@ -422,6 +422,20 @@ export const getReportByStudent = catchAsyncError(async (req,res,next) => {
       ? req.query.subjects
       : [req.query.subjects];
     aggregateQuery[3].$match["test.subjects"] = { $in: subjects };
+  }
+
+  // if(req.query.exam) {
+  //   aggregateQuery[3].$match["exam"] = req.query.exam;
+  // }
+
+  if (req.query.exam && req.query.exam !== "") {
+    const matchStage = {
+      $match: {
+        exam: req.query.exam,
+      },
+    };
+
+    aggregateQuery[2].$lookup.pipeline.splice(1, 0, matchStage);
   }
 
   if (req.query.type) {
