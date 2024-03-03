@@ -70,8 +70,8 @@ let accessLogStream = rfs.createStream("access.log", {
 });
 
 app.set("view engine", "ejs");
-app.use("/api", express.json({limit:'50mb'}));
-app.use("/api", express.urlencoded({ limit:'50mb', extended: true }));
+app.use("/api", express.json({limit:'150mb'}));
+app.use("/api", express.urlencoded({ limit:'150mb', extended: true }));
 app.use(express.static(__dirname + "/public"));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 app.use(methodOverride("_method"));

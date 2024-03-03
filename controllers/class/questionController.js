@@ -711,7 +711,7 @@ export const importQuestions = catchAsyncError(async (req,res,next) => {
   const highestQueNo = await Question.findOne({ teacher: userId }).sort({ number: -1 });
   let queNo = highestQueNo?.number ?? 0;
 
-  data.forEach(async (item) => {
+  await Promise.all(data.map(async (item) => {
     let _question =  {
       question:item.question,
       answer:item.answer,
@@ -764,9 +764,9 @@ export const importQuestions = catchAsyncError(async (req,res,next) => {
       let message = err.message || "Something went wrong";
       console.log(message);
 
-      unsavedQues.push({ question: _question, reason: message });
+      unsavedQues.push({ question: _question, id: item.id, reason: message });
     }
-  })
+  }))
 
   return res.status(200).json({message:"Questions added successfully", unsavedQues});
 
