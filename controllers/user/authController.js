@@ -12,7 +12,7 @@ export const loginUser = catchAsyncError(async (req, res, next) => {
   const { username, password, role } = req.body;
 
   const user = await User.findOne({
-    $or: [{ phone: username }, { email: username }, { username: username }], 
+    $or: [{ phone: username }, { email: username }, { username: username }],
     status: true,
   }).select("+password");
 
@@ -30,9 +30,9 @@ export const loginUser = catchAsyncError(async (req, res, next) => {
   }
 
   // Check if the user is already logged in from another device
-  if (user.currentSessionId) {
+  if (user.role !== "admin" && user.currentSessionId) {
     const currentSession = await Session.findOne({ sessionId: user.currentSessionId });
-    if(currentSession) {
+    if (currentSession) {
       // Invalidate the old session
       await Session.findOneAndDelete({ sessionId: user.currentSessionId });
       // Prompt user to login again
@@ -71,7 +71,7 @@ export const logoutUser = catchAsyncError(async (req, res, next) => {
 
 // register
 export const registerUser = catchAsyncError(async (req, res, next) => {
- const {
+  const {
     createdBy,
     firstName,
     lastName,
@@ -101,8 +101,8 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
   //   );
   // }
 
-  if(phone && phone.length !== 10){
-    return res.status(400).json({message:"Phone number must be 10 digits"});
+  if (phone && phone.length !== 10) {
+    return res.status(400).json({ message: "Phone number must be 10 digits" });
   }
 
   let user = await User.findOne({
@@ -112,7 +112,7 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
   });
 
   if (user) {
-    return res.status(400).json({message:"Email or Phone already registered."});
+    return res.status(400).json({ message: "Email or Phone already registered." });
   }
 
   let _user = {
@@ -124,63 +124,63 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
   };
 
 
-  if(role){
+  if (role) {
     _user.role = role;
   }
-  if(email){
+  if (email) {
     _user.email = email;
   }
-  if(phone){
+  if (phone) {
     _user.phone = phone;
   }
-  if(dob){
+  if (dob) {
     _user.dob = dob;
   }
-  if(role){
+  if (role) {
     _user.role = role;
   }
-  if(gender){
+  if (gender) {
     _user.gender = gender;
   }
-  if(description){
+  if (description) {
     _user.description = description;
   }
-  if(standard){
+  if (standard) {
     _user.standard = Number(standard);
   }
-  if(className){
+  if (className) {
     _user.className = className;
   }
-  if(subjects){
-    _user.subjects = Array.isArray(subjects) ? subjects: [subjects];
+  if (subjects) {
+    _user.subjects = Array.isArray(subjects) ? subjects : [subjects];
   }
-  if(exams){
-    _user.exams = Array.isArray(exams) ? exams: [exams];
+  if (exams) {
+    _user.exams = Array.isArray(exams) ? exams : [exams];
   }
-  if(req.files['profileImg']){
-    _user.profileImg = new URL('/assets/'+req.files.profileImg[0].key, process.env.BACKEND_URL).toString();
+  if (req.files['profileImg']) {
+    _user.profileImg = new URL('/assets/' + req.files.profileImg[0].key, process.env.BACKEND_URL).toString();
   }
-  if(req.files['logoImg']){
-    _user.logoImg = new URL('/assets/'+req.files.logoImg[0].key, process.env.BACKEND_URL).toString();
+  if (req.files['logoImg']) {
+    _user.logoImg = new URL('/assets/' + req.files.logoImg[0].key, process.env.BACKEND_URL).toString();
   }
-  if(req.files['watermarkImg']){
-    _user.watermarkImg = new URL('/assets/'+req.files.watermarkImg[0].key, process.env.BACKEND_URL).toString();
+  if (req.files['watermarkImg']) {
+    _user.watermarkImg = new URL('/assets/' + req.files.watermarkImg[0].key, process.env.BACKEND_URL).toString();
   }
 
 
-  if(address || city || state || pincode){
+  if (address || city || state || pincode) {
     let _location = {};
 
-      if(address){
-    _location.address = address;
+    if (address) {
+      _location.address = address;
     }
-    if(city){
+    if (city) {
       _location.city = city;
     }
-    if(state){
+    if (state) {
       _location.state = state;
     }
-    if(pincode){
+    if (pincode) {
       _location.pincode = pincode;
     }
 
@@ -189,7 +189,7 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
 
   user = await User.create(_user);
 
-  return res.status(200).json({message:"User created successfully",user});
+  return res.status(200).json({ message: "User created successfully", user });
   // sendToken(user, 200, res);
 })
 
@@ -197,10 +197,10 @@ export const registerUser = catchAsyncError(async (req, res, next) => {
 export const userChangePassword = catchAsyncError(async (req, res, next) => {
   const { currentPassword, newPassword, confirmPassword } = req.body;
 
-  if (newPassword !== confirmPassword) return res.status(400).json({message:"Password and confirm password does't match"});
-    // return next(
-    //   new ErrorHandler("Password and confirm password does't match", 400)
-    // );
+  if (newPassword !== confirmPassword) return res.status(400).json({ message: "Password and confirm password does't match" });
+  // return next(
+  //   new ErrorHandler("Password and confirm password does't match", 400)
+  // );
 
   const user = await User.findOne({ email: req.user.email }).select(
     "+password"
@@ -208,7 +208,7 @@ export const userChangePassword = catchAsyncError(async (req, res, next) => {
   const correctPass = await user.comparePassword(currentPassword);
 
   if (!correctPass) {
-    return res.status(401).json({message:"Incorrect password"})
+    return res.status(401).json({ message: "Incorrect password" })
     // return next(new ErrorHandler("Incorrect password", 401));
   }
 
@@ -245,82 +245,82 @@ export const updateUserInfo = catchAsyncError(async (req, res, next) => {
   let user = await User.findById(req.params.id);
 
   if (!user) {
-    return res.status(404).json({message:"User not found"});
+    return res.status(404).json({ message: "User not found" });
   }
 
   // if(req.user.role === "student" && req.user._id != req.params.id){
   //   return res.status(403).json({message:"You are not authorized to update this user"});
   // }
 
-  if(firstName){
+  if (firstName) {
     user.firstName = firstName;
   }
-  if(lastName){
+  if (lastName) {
     user.lastName = lastName;
   }
-  if(username){
+  if (username) {
     user.username = username;
   }
-  if(email){
+  if (email) {
     user.email = email;
   }
-  if(phone){
+  if (phone) {
     user.phone = phone;
   }
-  if(dob){
+  if (dob) {
     user.dob = dob;
   }
-  if(role){
+  if (role) {
     user.role = role;
   }
-  if(address){
+  if (address) {
     user.address = address;
   }
-  if(city){
+  if (city) {
     user.city = city;
   }
-  if(state){
+  if (state) {
     user.state = state;
   }
-  if(pincode){
+  if (pincode) {
     user.pincode = pincode;
   }
-  if(gender){
+  if (gender) {
     user.gender = gender;
   }
-  if(description){
+  if (description) {
     user.description = description;
   }
-  if(standard){
+  if (standard) {
     user.standard = Number(standard);
   }
-  if(className){
+  if (className) {
     user.className = className;
   }
-  if(subjects){
-    user.subjects = Array.isArray(subjects) ? subjects: [subjects];
+  if (subjects) {
+    user.subjects = Array.isArray(subjects) ? subjects : [subjects];
   }
-  if(exams){
-    user.exams = Array.isArray(exams) ? exams: [exams];
+  if (exams) {
+    user.exams = Array.isArray(exams) ? exams : [exams];
   }
-  if(password){
+  if (password) {
     user.password = password;
   }
-  if(req.files['profileImg']){
-    user.profileImg = new URL('/assets/'+req.files.profileImg[0].key, process.env.BACKEND_URL).toString();
+  if (req.files['profileImg']) {
+    user.profileImg = new URL('/assets/' + req.files.profileImg[0].key, process.env.BACKEND_URL).toString();
   }
-  if(req.files['logoImg']){
-    user.logoImg = new URL('/assets/'+req.files.logoImg[0].key, process.env.BACKEND_URL).toString();
+  if (req.files['logoImg']) {
+    user.logoImg = new URL('/assets/' + req.files.logoImg[0].key, process.env.BACKEND_URL).toString();
   }
-  if(req.files['watermarkImg']){
-    user.watermarkImg = new URL('/assets/'+req.files.watermarkImg[0].key, process.env.BACKEND_URL).toString();
+  if (req.files['watermarkImg']) {
+    user.watermarkImg = new URL('/assets/' + req.files.watermarkImg[0].key, process.env.BACKEND_URL).toString();
   }
 
   try {
     await user.save();
-    res.status(200).json({message:"User updated successfully"});
+    res.status(200).json({ message: "User updated successfully" });
   } catch (error) {
-    res.status(500).json({message:"Something went wrong"});
+    res.status(500).json({ message: "Something went wrong" });
   }
 
 });
