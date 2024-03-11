@@ -352,7 +352,7 @@ export const createTest = catchAsyncError(async (req, res, next) => {
     return res.status(500).json({ message: "invalid test type!" });
   }
 
-  const foundName = await Test.findOne({ name });
+  const foundName = await Test.findOne({ name, creator: req.user._id });
 
   if (foundName) {
     return res.status(501).json({ message: "test with same name exist!" });
