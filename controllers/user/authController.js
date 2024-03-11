@@ -221,6 +221,7 @@ export const userChangePassword = catchAsyncError(async (req, res, next) => {
 
 export const updateUserInfo = catchAsyncError(async (req, res, next) => {
   const {
+    createdBy,
     firstName,
     lastName,
     email,
@@ -252,6 +253,9 @@ export const updateUserInfo = catchAsyncError(async (req, res, next) => {
   //   return res.status(403).json({message:"You are not authorized to update this user"});
   // }
 
+  if (createdBy) {
+    user.createdBy = createdBy;
+  }
   if (firstName) {
     user.firstName = firstName;
   }
