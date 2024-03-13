@@ -26,8 +26,16 @@ export const getAllQuestions = catchAsyncError(async (req,res,next) => {
       }
 
       if(req.query.yearOfAppearance){
-        const yearOfAppearance = Array.isArray(req.query.yearOfAppearance) ? req.query.yearOfAppearance : [req.query.yearOfAppearance];
-        query.yearOfAppearance = { $in: yearOfAppearance };
+        if(req.query.yearOfAppearance == "true"){
+          query.yearOfAppearance = { 
+            $exists: true,
+            $nin: ["null", "undefined", "NA", "na", 0],
+            $not: { $eq: [ { $toInt: "$yearOfAppearance" }, 0 ] }
+          };
+        }else {
+          const yearOfAppearance = Array.isArray(req.query.yearOfAppearance) ? req.query.yearOfAppearance : [req.query.yearOfAppearance];
+          query.yearOfAppearance = { $in: yearOfAppearance };
+        }
       }
 
       if (req.query.exam) {
@@ -47,6 +55,10 @@ export const getAllQuestions = catchAsyncError(async (req,res,next) => {
         query.subject = {
           $in: subjects,
         };
+      }
+
+      if (req.query.pyq) {
+        query.yearOfAppearance = { $ne: null, $ne: "", $ne: "null", $ne: "undefined", $ne: "NA", $ne: "na", $ne: 0 };
       }
 
       let limit = parseInt(req.query.perPage) || 10;
