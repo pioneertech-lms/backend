@@ -379,7 +379,7 @@ export const createTest = catchAsyncError(async (req, res, next) => {
     _test.endTime = new Date(endTime);
   }
 
-  if (_test.type === "manual" || _test.type === "random" || _test.type === "mock" || _test.type === "scheduled") {
+  if (_test.type === "manual" || _test.type === "random" || _test.type === "mock" || _test.type === "pyq") {
     _test.questions = questions;
   }
   if (_test.type === "live") {
