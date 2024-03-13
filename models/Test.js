@@ -53,11 +53,11 @@ const schema = new mongoose.Schema(
   }
 );
 
-schema.pre("save", function(next) {
-  if (this.questions.length > 100) {
-    this.questions = this.questions.slice(0, 100);
-  }
-  next();
-});
+// schema.pre("save", function(next) {
+//   if (this.questions.length > 100) {
+//     this.questions = this.questions.slice(0, 100);
+//   }
+//   next();
+// });
 
 export const Test = mongoose.model("test",schema);
