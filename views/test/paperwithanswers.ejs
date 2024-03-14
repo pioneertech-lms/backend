@@ -58,7 +58,14 @@ _%>
 				<ul>
 				<% questions.forEach(function(question){ %>
 				<li type="1" class="question">
-					<div><%- question.question %></div>
+					<div>
+						<%- question.question %>
+						<% if(test.type === "pyq" && parseInt(question.yearOfAppearance)) { %>
+							<b style="display: block;">
+								<%- question.exam.toUpperCase() %> (<%- question.yearOfAppearance %>)
+							</b>
+						<% } %>
+					</div>
 					<ol class="options" type="a">
 						<% question.options.forEach(function (option){ %>
 						<li><%- option %></li>
