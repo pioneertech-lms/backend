@@ -8,6 +8,7 @@ const ObjectId = mongoose.Types.ObjectId;
 
 export const getAllReports = catchAsyncError(async (req, res) => {
   const teacherId = new ObjectId(req.params.teacherId);
+  const exam = req.query.exam;
   const limit = parseInt(req.query.perPage) || 10;
   const page = parseInt(req.query.page) || 1;
   const skip = (page - 1) * limit;
@@ -31,6 +32,7 @@ export const getAllReports = catchAsyncError(async (req, res) => {
               $expr: {
                 $eq: ["$_id", "$$testId"],
               },
+              exam
             },
           },
           {
@@ -316,7 +318,7 @@ export const updateReport = catchAsyncError(async (req,res,next) => {
 
 })
 
-export const getReportByStudent = catchAsyncError(async (req,res,next) => { 
+export const getReportByStudent = catchAsyncError(async (req,res,next) => {
   let query = {
     student: new ObjectId(req.params.studentId)
   };
@@ -327,6 +329,7 @@ export const getReportByStudent = catchAsyncError(async (req,res,next) => {
   let sort = req.query.sort ? {} : { createdAt: -1 };
   let search = req.query.search;
   let testId = req.query.testId;
+  let exam = req.query.exam;
 
   if(testId) {
     query.test = new ObjectId(testId);
@@ -375,6 +378,7 @@ export const getReportByStudent = catchAsyncError(async (req,res,next) => {
               $expr: {
                 $eq: ["$_id", "$$testId"],
               },
+              exam
             },
           },
           {
