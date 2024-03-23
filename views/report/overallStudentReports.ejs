@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overall Student Reports</title>
+  <style>
+    /* Add your CSS styles here */
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Welcome, <%= user %>!</h1>
+  </header>
+  <main>
+    <table>
+      <thead>
+        <tr>
+          <th>Serial No.</th>
+          <th>Test Name</th>
+          <th>Test Type</th>
+          <th>Date</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% reports.forEach((report) => { %>
+          <tr>
+            <td><%= report.serialNo %></td>
+            <td><%= report.testName %></td>
+            <td><%= report.testType %></td>
+            <td><%= report.date %></td>
+            <td>
+              <ul>
+                <li>Total Marks: <%= report.result.totalMarks %></li>
+                <li>Percentage: <%= report.result.percentage %>%</li>
+                <li>Attempted Percentage: <%= report.result.attemptedPercentage %>%</li>
+                <li>Accuracy Percentage: <%= report.result.accuracyPercentage %>%</li>
+              </ul>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </main>
+</body>
+</html>
