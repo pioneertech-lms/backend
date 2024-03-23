@@ -7,7 +7,10 @@ import {
     getReportByTest,
     updateReport,
     getAnalysisReport,
-    getReportByStudent
+    getReportByStudent,
+    getOverallReportsByStudent,
+    getOverallReports,
+    printOverallStudentReports,
 } from "../../controllers/class/reportController.js";
 
 import { checkUserModuleAccess, authorizedUser } from "../../middleWares/accessAuth.js";
@@ -40,5 +43,20 @@ router
 router
     .route("/:id")
     .get(authorizedUser, getSingleReport)
+
+// overall reports
+router
+    .route("/print/:id")
+    .get(printOverallStudentReports);
+
+router
+    .route("/overall/teacher/:id")
+    // .get(getOverallReports);
+    .get(authorizedUser,getOverallReports);
+
+router
+    .route("/overall/student/:studentId")
+    .get(authorizedUser,getOverallReportsByStudent);
+
 
 export default router;
