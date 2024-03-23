@@ -1,0 +1,81 @@
+<!-- prettier-ignore -->
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Report</title>
+		<%- include("../partials/css") %>
+		<style>
+			table,
+			td {
+				border: 1px solid;
+				border-collapse: collapse;
+			}
+
+			td {
+				padding: 0.5rem;
+				text-align: center;
+			}
+
+			thead td {
+				font-weight: bold;
+			}
+
+			.stats {
+				width: 100%;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="watermark">
+			<img
+				id="watermark"
+				src="<%= user.watermarkImg %>"
+				alt="watermark"
+				height="256"
+			/>
+		</div>
+		<div class="header">
+			<img class="logo" src="<%= user.logoImg %>" alt="Logo" height="96" />
+			<div align="center">
+				<h1><u><%= user.className %></u></h1>
+				<p>Report for teacher</p>
+			</div>
+			<div class="metadata"></div>
+		</div>
+
+		<hr />
+		<div>
+			<table class="stats">
+				<thead>
+					<tr>
+						<td>Sr No</td>
+						<td>Student Name</td>
+						<td>Test Name</td>
+						<td>Date</td>
+						<td>Subjects</td>
+						<td>Percentage</td>
+						<td>Attendance</td>
+					</tr>
+				</thead>
+
+				<tbody>
+                    <% entries.forEach((entry, index) => { %>
+					<tr>
+						<td><% entry+1 %></td>
+						<td>Pratham</td>
+						<td>exam301</td>
+						<td>28/03/2024</td>
+						<td>PCM</td>
+						<td>92.04%</td>
+						<td>Present</td>
+					</tr>
+                    <% }) %>
+				</tbody>
+			</table>
+		</div>
+
+		<hr />
+	</body>
+</html>
