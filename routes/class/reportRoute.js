@@ -8,9 +8,8 @@ import {
     updateReport,
     getAnalysisReport,
     getReportByStudent,
-    getOverallReportsByStudent,
-    getOverallReports,
-    printOverallStudentReports,
+    getTestReportForAllStudents,
+    getStudentReportForAllTests
 } from "../../controllers/class/reportController.js";
 
 import { checkUserModuleAccess, authorizedUser } from "../../middleWares/accessAuth.js";
@@ -46,17 +45,11 @@ router
 
 // overall reports
 router
-    .route("/print/:id")
-    .get(printOverallStudentReports);
-
-router
-    .route("/overall/teacher/:id")
-    // .get(getOverallReports);
-    .get(authorizedUser,getOverallReports);
+    .route("/overall/test/:testId")
+    .get(getTestReportForAllStudents);
 
 router
     .route("/overall/student/:studentId")
-    .get(authorizedUser,getOverallReportsByStudent);
-
+    .get(getStudentReportForAllTests);
 
 export default router;

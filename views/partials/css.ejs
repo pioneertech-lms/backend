@@ -3,10 +3,6 @@
 		table:last-of-type {
 			page-break-after: auto;
 		}
-		html,
-		body {
-			height: 100%;
-		}
 		body {
 			margin: 0;
 			padding: 0;
@@ -93,7 +89,7 @@
 	}
 </style>
 
-<% if (layout ==='two-column') { %>
+<% if (typeof layout !== "undefined" && layout ==='two-column') { %>
 <style>
 	.explanation img,
 	.options li img,
