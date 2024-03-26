@@ -611,7 +611,7 @@ export const getStudentReportForAllTests = catchAsyncError(async (req, res, next
     return res.status(404).json({ message: "student not found!" });
   }
 
-  const entries = await Test.aggregate([
+  const entries = (await Test.aggregate([
     {
       $match: {
         $or: [
@@ -629,33 +629,15 @@ export const getStudentReportForAllTests = catchAsyncError(async (req, res, next
       }
     },
     {
-      $addFields: {
-        percentage: {
-          $cond: [
-            {
-              $and: [
-                { $gt: [{ $size: "$report" }, 0] },
-                { $ne: [{ $arrayElemAt: ["$report.total", 0] }, 0] } // Check if total is not zero
-              ]
-            },
-            {
-              $multiply: [
-                { $divide: [{ $arrayElemAt: ["$report.obtainedMarks", 0] }, { $arrayElemAt: ["$report.total", 0] }] },
-                100
-              ]
-            },
-            undefined
-          ]
-        }
-      }
-    },
-    {
       $project: {
-        report: 0,
         questions: 0
       }
     }
-  ]);
+  ])).map(entry => {
+    entry.percentage = entry.report.length ? (entry.report[0].obtainedMarks * 100 / entry.report[0].total) : 0;
+    delete entry.report;
+    return entry;
+  });
 
   const htmlContent = await ejs.renderFile("views/report/student.ejs", {
     dayjs,
@@ -671,7 +653,7 @@ export const getStudentReportForAllTests = catchAsyncError(async (req, res, next
 
     const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: { left: '0.5cm', top: '0.5cm', right: '0.5cm', bottom: '0.5cm' } });
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=${user.firstName}-${user.lastName}-report.pdf`);
+    res.setHeader('Content-Disposition', `filename=${user.firstName}-${user.lastName}-report.pdf`);
     res.send(pdfBuffer);
 
     await page.close();
