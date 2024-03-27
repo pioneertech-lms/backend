@@ -634,7 +634,8 @@ export const getStudentReportForAllTests = catchAsyncError(async (req, res, next
       }
     }
   ])).map(entry => {
-    entry.percentage = entry.report.length ? (entry.report[0].obtainedMarks * 100 / entry.report[0].total) : 0;
+    const report = entry.report.find(r => r.student.toString() === user._id.toString());
+    entry.percentage = report ? (report.obtainedMarks * 100 / report.total) : 0;
     delete entry.report;
     return entry;
   });
